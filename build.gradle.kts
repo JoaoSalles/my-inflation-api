@@ -24,6 +24,8 @@ dependencies {
     implementation(libs.h2database.h2)
     implementation(libs.insert.koin.koinKtor)
     implementation(libs.insert.koin.koinLoggerSlf4j)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.logback.classic)
     implementation(libs.postgresql)
 

@@ -3,7 +3,7 @@ h2 = "2.4.240"
 koin = "4.2.0"
 kotlin = "2.3.20"
 ktor = "3.4.1"
-logback = "1.5.21"
+logback = "1.5.32"
 
 [libraries]
 h2database-h2 = { module = "com.h2database:h2", version.ref = "h2" }
@@ -11,6 +11,8 @@ insert-koin-koinKtor = { module = "io.insert-koin:koin-ktor", version.ref = "koi
 insert-koin-koinLoggerSlf4j = { module = "io.insert-koin:koin-logger-slf4j", version.ref = "koin" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 postgresql = { module = "org.postgresql:postgresql", version = "42.7.10" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

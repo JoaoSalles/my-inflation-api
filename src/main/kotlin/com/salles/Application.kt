@@ -1,16 +1,24 @@
 package com.salles
 
+import com.salles.scrapping.routes.scrappingRoutes
+import com.salles.scrapping.services.ScrappingService
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
+import io.ktor.server.plugins.contentnegotiation.*
+import org.koin.dsl.module
+import org.koin.ktor.plugin.Koin
 
 fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module() {
-    routing {
-        get("/") {
-            call.respondText("Hello, world!")
-        }
+    install(ContentNegotiation) {
+        json()
     }
+    install(Koin) {
+        modules(module {
+            single { ScrappingService() }
+        })
+    }
+
+    scrappingRoutes()
 }

@@ -25,6 +25,52 @@ The base package for this project is `com.salles`.
 
 ---
 
+## UUID Setup (required once per project)
+
+### Dependency (`build.gradle.kts`)
+
+```kotlin
+implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
+```
+
+### UUID Serializer (shared utility — create once at `com.salles.common.UUIDSerializer.kt`)
+
+```kotlin
+package com.salles.common
+
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import java.util.UUID
+
+object UUIDSerializer : KSerializer<UUID> {
+    override val descriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
+    override fun serialize(encoder: Encoder, value: UUID) = encoder.encodeString(value.toString())
+    override fun deserialize(decoder: Decoder): UUID = UUID.fromString(decoder.decodeString())
+}
+```
+
+### ContentNegotiation (in `configureSerialization`)
+
+Register the serializer so every module's `@Contextual UUID` fields serialize correctly:
+
+```kotlin
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
+
+install(ContentNegotiation) {
+    json(Json {
+        serializersModule = SerializersModule {
+            contextual(UUID::class, UUIDSerializer)
+        }
+    })
+}
+```
+
+---
+
 ## Creating a Full Module
 
 Replace `<ModuleName>` with PascalCase (e.g., `City`) and `<moduleName>` with camelCase (e.g., `city`) throughout.
@@ -35,11 +81,14 @@ Replace `<ModuleName>` with PascalCase (e.g., `City`) and `<moduleName>` with ca
 ```kotlin
 package com.salles.<moduleName>.domain
 
+import com.salles.<moduleName>.data.<ModuleName>
+import java.util.UUID
+
 interface <ModuleName>Repository {
-    suspend fun findById(id: Int): <ModuleName>?
-    suspend fun create(entity: <ModuleName>): Int
-    suspend fun update(id: Int, entity: <ModuleName>)
-    suspend fun delete(id: Int)
+    suspend fun findById(id: UUID): <ModuleName>?
+    suspend fun create(entity: <ModuleName>): UUID
+    suspend fun update(id: UUID, entity: <ModuleName>)
+    suspend fun delete(id: UUID)
 }
 ```
 
@@ -47,11 +96,14 @@ interface <ModuleName>Repository {
 ```kotlin
 package com.salles.<moduleName>.domain
 
+import com.salles.<moduleName>.data.<ModuleName>
+import java.util.UUID
+
 interface <ModuleName>Service {
-    suspend fun getById(id: Int): <ModuleName>
-    suspend fun create(entity: <ModuleName>): Int
-    suspend fun update(id: Int, entity: <ModuleName>)
-    suspend fun delete(id: Int)
+    suspend fun getById(id: UUID): <ModuleName>
+    suspend fun create(entity: <ModuleName>): UUID
+    suspend fun update(id: UUID, entity: <ModuleName>)
+    suspend fun delete(id: UUID)
 }
 ```
 
@@ -61,10 +113,14 @@ interface <ModuleName>Service {
 ```kotlin
 package com.salles.<moduleName>.data
 
+import com.salles.common.UUIDSerializer
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Serializable
 data class <ModuleName>(
+    @Contextual val id: UUID? = null
     // Add fields here
 )
 ```
@@ -76,12 +132,12 @@ package com.salles.<moduleName>.data
 object <ModuleName>Table {
     const val CREATE = """
         CREATE TABLE IF NOT EXISTS <moduleName>s (
-            id SERIAL PRIMARY KEY
+            id UUID PRIMARY KEY
             -- Add columns here
         )
     """
     const val SELECT_BY_ID = "SELECT * FROM <moduleName>s WHERE id = ?"
-    const val INSERT = "INSERT INTO <moduleName>s (...) VALUES (?)"
+    const val INSERT = "INSERT INTO <moduleName>s (id, ...) VALUES (?, ?)"
     const val UPDATE = "UPDATE <moduleName>s SET ... WHERE id = ?"
     const val DELETE = "DELETE FROM <moduleName>s WHERE id = ?"
 }
@@ -105,13 +161,16 @@ data class Create<ModuleName>Request(
 ```kotlin
 package com.salles.<moduleName>.repositories
 
+import com.fasterxml.uuid.Generators
 import com.salles.<moduleName>.data.<ModuleName>
 import com.salles.<moduleName>.data.<ModuleName>Table
 import com.salles.<moduleName>.domain.<ModuleName>Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.sql.Connection
-import java.sql.Statement
+import java.util.UUID
+
+private val uuidV7Generator = Generators.timeBasedEpochGenerator()
 
 class <ModuleName>RepositoryImpl(private val connection: Connection) : <ModuleName>Repository {
 
@@ -119,31 +178,32 @@ class <ModuleName>RepositoryImpl(private val connection: Connection) : <ModuleNa
         connection.createStatement().executeUpdate(<ModuleName>Table.CREATE)
     }
 
-    override suspend fun create(entity: <ModuleName>): Int = withContext(Dispatchers.IO) {
-        val stmt = connection.prepareStatement(<ModuleName>Table.INSERT, Statement.RETURN_GENERATED_KEYS)
-        // bind parameters
+    override suspend fun create(entity: <ModuleName>): UUID = withContext(Dispatchers.IO) {
+        val id = uuidV7Generator.generate()
+        val stmt = connection.prepareStatement(<ModuleName>Table.INSERT)
+        stmt.setObject(1, id)
+        // bind remaining parameters
         stmt.executeUpdate()
-        val keys = stmt.generatedKeys
-        if (keys.next()) keys.getInt(1) else throw Exception("Insert failed: no generated key")
+        id
     }
 
-    override suspend fun findById(id: Int): <ModuleName>? = withContext(Dispatchers.IO) {
+    override suspend fun findById(id: UUID): <ModuleName>? = withContext(Dispatchers.IO) {
         val stmt = connection.prepareStatement(<ModuleName>Table.SELECT_BY_ID)
-        stmt.setInt(1, id)
+        stmt.setObject(1, id)
         val rs = stmt.executeQuery()
         if (rs.next()) <ModuleName>(/* map columns */) else null
     }
 
-    override suspend fun update(id: Int, entity: <ModuleName>) = withContext(Dispatchers.IO) {
+    override suspend fun update(id: UUID, entity: <ModuleName>) = withContext(Dispatchers.IO) {
         val stmt = connection.prepareStatement(<ModuleName>Table.UPDATE)
         // bind parameters
-        stmt.setInt(/* last param */, id)
+        stmt.setObject(/* last param index */, id)
         stmt.executeUpdate()
     }
 
-    override suspend fun delete(id: Int) = withContext(Dispatchers.IO) {
+    override suspend fun delete(id: UUID) = withContext(Dispatchers.IO) {
         val stmt = connection.prepareStatement(<ModuleName>Table.DELETE)
-        stmt.setInt(1, id)
+        stmt.setObject(1, id)
         stmt.executeUpdate()
     }
 }
@@ -158,17 +218,18 @@ package com.salles.<moduleName>.service
 import com.salles.<moduleName>.data.<ModuleName>
 import com.salles.<moduleName>.domain.<ModuleName>Repository
 import com.salles.<moduleName>.domain.<ModuleName>Service
+import java.util.UUID
 
 class <ModuleName>ServiceImpl(private val repository: <ModuleName>Repository) : <ModuleName>Service {
 
-    override suspend fun getById(id: Int): <ModuleName> =
+    override suspend fun getById(id: UUID): <ModuleName> =
         repository.findById(id) ?: throw NoSuchElementException("<ModuleName> $id not found")
 
-    override suspend fun create(entity: <ModuleName>): Int = repository.create(entity)
+    override suspend fun create(entity: <ModuleName>): UUID = repository.create(entity)
 
-    override suspend fun update(id: Int, entity: <ModuleName>) = repository.update(id, entity)
+    override suspend fun update(id: UUID, entity: <ModuleName>) = repository.update(id, entity)
 
-    override suspend fun delete(id: Int) = repository.delete(id)
+    override suspend fun delete(id: UUID) = repository.delete(id)
 }
 ```
 
@@ -186,6 +247,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
+import java.util.UUID
 
 fun Application.configure<ModuleName>Routes() {
     val service: <ModuleName>Service by inject()
@@ -194,19 +256,19 @@ fun Application.configure<ModuleName>Routes() {
             post {
                 val body = call.receive<<ModuleName>>()
                 val id = service.create(body)
-                call.respond(HttpStatusCode.Created, id)
+                call.respond(HttpStatusCode.Created, id.toString())
             }
             get("/{id}") {
-                val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+                val id = UUID.fromString(call.parameters["id"] ?: throw IllegalArgumentException("Missing ID"))
                 call.respond(service.getById(id))
             }
             put("/{id}") {
-                val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+                val id = UUID.fromString(call.parameters["id"] ?: throw IllegalArgumentException("Missing ID"))
                 service.update(id, call.receive())
                 call.respond(HttpStatusCode.OK)
             }
             delete("/{id}") {
-                val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+                val id = UUID.fromString(call.parameters["id"] ?: throw IllegalArgumentException("Missing ID"))
                 service.delete(id)
                 call.respond(HttpStatusCode.OK)
             }
