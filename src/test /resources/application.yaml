@@ -1,0 +1,14 @@
+ktor:
+    application:
+        modules:
+            - salles.ApplicationKt.module
+    deployment:
+        port: 8080
+
+db:
+    name: salles_bank_test
+    url: ${DB_URL:jdbc:placeholder}
+    user: ${DB_USER:salles}
+    password: ${DB_PASSWORD:salles}
+    pool:
+        maximumPoolSize: 2
