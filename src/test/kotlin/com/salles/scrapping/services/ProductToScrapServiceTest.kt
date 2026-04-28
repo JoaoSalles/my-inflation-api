@@ -38,7 +38,11 @@ class ProductToScrapServiceTest {
 
         assertEquals(2, all.size)
         assertEquals("Açúcar", all[0].productName)
+        assertEquals(QuantityBase.GRAMS, all[0].quantityBase)
+        assertEquals(listOf("açúcar"), all[0].keyWords)
         assertEquals("Azeite", all[1].productName)
+        assertEquals(QuantityBase.MILLILITERS, all[1].quantityBase)
+        assertEquals(listOf("azeite", "oliva"), all[1].keyWords)
     }
 
     @Test

@@ -8,7 +8,7 @@ import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import javax.sql.DataSource
 
-class DatabaseFactory(dataSource: DataSource) {
+class PostgresDatabaseFactory(dataSource: DataSource) {
 
     init {
         runMigrations(dataSource)

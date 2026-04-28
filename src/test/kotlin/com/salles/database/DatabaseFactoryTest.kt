@@ -21,7 +21,7 @@ class DatabaseFactoryTest {
             user = "sa"
             password = ""
         }
-        DatabaseFactory(dataSource)
+        PostgresDatabaseFactory(dataSource)
     }
 
     @Test
