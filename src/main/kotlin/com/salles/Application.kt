@@ -2,6 +2,9 @@ package com.salles
 
 import com.salles.scrapping.routes.scrappingRoutes
 import com.salles.scrapping.services.ScrappingService
+import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -16,7 +19,18 @@ fun Application.module() {
     }
     install(Koin) {
         modules(module {
-            single { ScrappingService() }
+            single<HttpClient> {
+                HttpClient(OkHttp) {
+                    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+                        json()
+                    }
+                    install(Logging) {
+                        logger = Logger.DEFAULT
+                        level = LogLevel.INFO
+                    }
+                }
+            }
+            single { ScrappingService(get()) }
         })
     }
 
