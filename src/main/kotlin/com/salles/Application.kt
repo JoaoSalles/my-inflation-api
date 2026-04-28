@@ -1,5 +1,6 @@
 package com.salles
 
+import com.salles.database.PostgresDatabaseFactory
 import com.salles.scrapping.routes.scrappingRoutes
 import com.salles.scrapping.services.ScrappingService
 import io.ktor.client.*
@@ -33,6 +34,8 @@ fun Application.module() {
             single { ScrappingService(get()) }
         })
     }
+
+    PostgresDatabaseFactory(environment.config)
 
     scrappingRoutes()
 }
