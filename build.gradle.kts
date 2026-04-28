@@ -16,12 +16,17 @@ kotlin {
     jvmToolchain(21)
 }
 dependencies {
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.kotlin.datetime)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.database.postgresql)
+    implementation(libs.hikaricp)
     implementation(ktorLibs.serialization.kotlinx.json)
     implementation(ktorLibs.server.config.yaml)
     implementation(ktorLibs.server.contentNegotiation)
     implementation(ktorLibs.server.core)
     implementation(ktorLibs.server.netty)
-    implementation(libs.h2database.h2)
     implementation(libs.insert.koin.koinKtor)
     implementation(libs.insert.koin.koinLoggerSlf4j)
     implementation(libs.ktor.client.content.negotiation)
@@ -32,6 +37,7 @@ dependencies {
     implementation(libs.postgresql)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.h2database.h2)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(ktorLibs.server.testHost)
     testImplementation(libs.ktor.client.mock)
