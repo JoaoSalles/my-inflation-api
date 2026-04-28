@@ -40,6 +40,8 @@ class PAScrapper(
             log.info("PA search for term='$product' returned ${products.size} products: ${products}")
             return products
         } catch (e: Exception) {
+            // TODO create a flow for errors, to keep track of scrapping that failed
+            // retry would be nice
             log.error("PA search error for term='$product'", e)
             return emptyList()
         }
