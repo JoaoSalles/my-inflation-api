@@ -3,7 +3,6 @@ package com.salles.database
 import com.salles.database.tables.PriceSnapshots
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.coroutines.test.runTest
-import org.h2.jdbcx.JdbcDataSource
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -16,12 +15,7 @@ class PostgresDatabaseFactoryTest {
 
     @BeforeTest
     fun setUp() {
-        val dataSource = JdbcDataSource().apply {
-            setURL("jdbc:h2:mem:test_db_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-            user = "sa"
-            password = ""
-        }
-        PostgresDatabaseFactory(dataSource)
+        TestDatabase.reset()
     }
 
     @Test
