@@ -1,7 +1,6 @@
 package com.salles.scrapping.routes
 
-import com.salles.database.DatabaseException
-import com.salles.database.ProductNameAlreadyExistsException
+import com.salles.scrapping.db.ProductNameAlreadyExistsException
 import com.salles.scrapping.data.CreateProductToScrapRequest
 import com.salles.scrapping.services.ProductToScrapService
 import io.ktor.http.HttpStatusCode

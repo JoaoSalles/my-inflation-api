@@ -1,4 +1,4 @@
-package com.salles.database.entities
+package com.salles.scrapping.db.entities
 
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.serialization.Serializable

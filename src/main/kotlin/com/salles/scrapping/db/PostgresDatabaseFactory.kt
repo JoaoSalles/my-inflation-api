@@ -1,4 +1,4 @@
-package com.salles.database
+package com.salles.scrapping.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource

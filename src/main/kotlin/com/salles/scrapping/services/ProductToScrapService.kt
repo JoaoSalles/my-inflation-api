@@ -1,7 +1,7 @@
 package com.salles.scrapping.services
 
-import com.salles.database.entities.ProductToScrapEntity
-import com.salles.database.repositories.ProductToScrapRepository
+import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.data.CreateProductToScrapRequest
 
 class ProductToScrapService(

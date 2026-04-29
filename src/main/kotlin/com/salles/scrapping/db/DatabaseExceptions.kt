@@ -1,4 +1,4 @@
-package com.salles.database
+package com.salles.scrapping.db
 
 class ProductNameAlreadyExistsException(productName: String) :
     Exception("Product with name '$productName' already exists")

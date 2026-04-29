@@ -1,10 +1,10 @@
 package com.salles.scrapping.routes
 
-import com.salles.database.DatabaseException
+import com.salles.scrapping.db.DatabaseException
 import com.salles.database.TestDatabase
-import com.salles.database.entities.ProductToScrapEntity
-import com.salles.database.repositories.PostgresProductToScrapRepository
-import com.salles.database.repositories.ProductToScrapRepository
+import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.repositories.PostgresProductToScrapRepository
+import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.domain.QuantityBase
 import com.salles.scrapping.services.ProductToScrapService
 import io.ktor.client.request.header

@@ -1,5 +1,6 @@
 package com.salles.database
 
+import com.salles.scrapping.db.PostgresDatabaseFactory
 import org.h2.jdbcx.JdbcDataSource
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 

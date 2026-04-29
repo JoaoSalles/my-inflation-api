@@ -4,6 +4,7 @@ import com.salles.scrapping.data.PAApiResponse
 import com.salles.scrapping.data.PASearchRequest
 import com.salles.scrapping.data.PASearchResponse
 import com.salles.scrapping.data.ProductToScrap
+import com.salles.scrapping.db.entities.ProductToScrapEntity
 import com.salles.scrapping.domain.QuantityBase
 import com.salles.scrapping.domain.ProductToScrap as DomainProductToScrap
 import com.salles.scrapping.domain.Scrapper
@@ -22,22 +23,22 @@ class PAScrapper(
     private val client: HttpClient,
 ) : Scrapper<PASearchResponse> {
 
-    override suspend fun scrap(product: String): List<PASearchResponse> {
+    override suspend fun scrap(product: ProductToScrapEntity): List<PASearchResponse> {
         try {
             val response: HttpResponse = client.post("https://api.vendas.gpa.digital/pa/search/search") {
                 contentType(ContentType.Application.Json)
-                setBody(PASearchRequest(product))
+                setBody(PASearchRequest(product.productName))
             }
             if (!response.status.isSuccess()) {
                 log.error("PA search failed for term='$product': HTTP ${response.status}")
                 return emptyList()
             }
             val products = response.body<PAApiResponse>().products.filter { it.unitPriceHomogeneousKit == null }
-            this.parseProducts(
-                ProductToScrap("açucar", listOf("refinado"), QuantityBase.GRAMS),
+            val parsedProducts = this.parseProducts(
+                ProductToScrap(product.productName, product.keyWords, product.quantityBase),
                 products
                 )
-            log.info("PA search for term='$product' returned ${products.size} products: ${products}")
+            log.info("PA search for term='${product.productName}' returned ${parsedProducts.size} products: ${parsedProducts}")
             return products
         } catch (e: Exception) {
             // TODO create a flow for errors, to keep track of scrapping that failed

@@ -1,6 +1,7 @@
 package com.salles.database
 
-import com.salles.database.tables.PriceSnapshots
+import com.salles.scrapping.db.dbQuery
+import com.salles.scrapping.db.tables.PriceSnapshots
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.v1.core.eq

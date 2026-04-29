@@ -1,16 +1,17 @@
-package com.salles.database.repositories
+package com.salles.scrapping.repositories
 
-import com.salles.database.DatabaseException
-import com.salles.database.ProductNameAlreadyExistsException
-import com.salles.database.dbQuery
-import com.salles.database.entities.ProductToScrapEntity
-import com.salles.database.tables.ProductsToScrap
+import com.salles.scrapping.db.DatabaseException
+import com.salles.scrapping.db.ProductNameAlreadyExistsException
+import com.salles.scrapping.db.dbQuery
+import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.db.tables.ProductsToScrap
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import java.sql.SQLException
 
 interface ProductToScrapRepository {
     suspend fun create(productName: String, quantityBase: QuantityBase, keyWords: List<String>): ProductToScrapEntity
@@ -41,7 +42,7 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
         }
     } catch (e: Exception) {
         val sqlState = generateSequence(e.cause) { it.cause }
-            .filterIsInstance<java.sql.SQLException>()
+            .filterIsInstance<SQLException>()
             .firstOrNull()
             ?.sqlState
         if (sqlState == "23505") throw ProductNameAlreadyExistsException(productName)

@@ -1,7 +1,7 @@
 package com.salles.scrapping.services
 
 import com.salles.database.TestDatabase
-import com.salles.database.repositories.PostgresProductToScrapRepository
+import com.salles.scrapping.repositories.PostgresProductToScrapRepository
 import com.salles.scrapping.data.CreateProductToScrapRequest
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.coroutines.test.runTest
