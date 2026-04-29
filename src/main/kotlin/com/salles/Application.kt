@@ -3,6 +3,7 @@ package com.salles
 import com.salles.database.PostgresDatabaseFactory
 import com.salles.database.repositories.PostgresProductToScrapRepository
 import com.salles.database.repositories.ProductToScrapRepository
+import com.salles.scrapping.routes.productToScrapRoutes
 import com.salles.scrapping.routes.scrappingRoutes
 import com.salles.scrapping.services.ProductToScrapService
 import com.salles.scrapping.services.ScrappingService
@@ -43,4 +44,5 @@ fun Application.module() {
     PostgresDatabaseFactory(environment.config)
 
     scrappingRoutes()
+    productToScrapRoutes()
 }

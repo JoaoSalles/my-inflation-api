@@ -1,10 +1,11 @@
 package com.salles.database.repositories
 
+import com.salles.database.DatabaseException
+import com.salles.database.ProductNameAlreadyExistsException
 import com.salles.database.dbQuery
 import com.salles.database.entities.ProductToScrapEntity
 import com.salles.database.tables.ProductsToScrap
 import com.salles.scrapping.domain.QuantityBase
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -23,19 +24,28 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
         productName: String,
         quantityBase: QuantityBase,
         keyWords: List<String>,
-    ): ProductToScrapEntity = dbQuery {
-        val insertedId = ProductsToScrap.insert {
-            it[ProductsToScrap.productName]  = productName
-            it[ProductsToScrap.quantityBase] = quantityBase
-            it[ProductsToScrap.keywords]     = Json.encodeToString(keyWords)
-        } get ProductsToScrap.id
+    ): ProductToScrapEntity = try {
+        dbQuery {
+            val insertedId = ProductsToScrap.insert {
+                it[ProductsToScrap.productName]  = productName
+                it[ProductsToScrap.quantityBase] = quantityBase
+                it[ProductsToScrap.keywords]     = Json.encodeToString(keyWords)
+            } get ProductsToScrap.id
 
-        ProductToScrapEntity(
-            id           = insertedId,
-            productName  = productName,
-            quantityBase = quantityBase,
-            keyWords     = keyWords,
-        )
+            ProductToScrapEntity(
+                id           = insertedId,
+                productName  = productName,
+                quantityBase = quantityBase,
+                keyWords     = keyWords,
+            )
+        }
+    } catch (e: Exception) {
+        val sqlState = generateSequence(e.cause) { it.cause }
+            .filterIsInstance<java.sql.SQLException>()
+            .firstOrNull()
+            ?.sqlState
+        if (sqlState == "23505") throw ProductNameAlreadyExistsException(productName)
+        throw DatabaseException(e)
     }
 
     override suspend fun update(

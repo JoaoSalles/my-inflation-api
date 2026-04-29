@@ -1,7 +1,9 @@
 package com.salles.database.entities
 
 import com.salles.scrapping.domain.QuantityBase
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ProductToScrapEntity(
     val id: Long,
     val productName: String,

@@ -3,3 +3,4 @@ build/*
 .env*
 .gradle
 .worktrees
+plans/*
