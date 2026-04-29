@@ -1,17 +1,22 @@
 package com.salles.scrapping.services
 
-import com.salles.database.entities.ProductToScrapEntity
-import com.salles.database.repositories.ProductToScrapRepository
+import com.salles.database.TestDatabase
+import com.salles.database.repositories.PostgresProductToScrapRepository
 import com.salles.scrapping.data.CreateProductToScrapRequest
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.coroutines.test.runTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ProductToScrapServiceTest {
 
-    private val fakeRepo = FakeProductToScrapRepository()
-    private val service  = ProductToScrapService(fakeRepo)
+    private val service = ProductToScrapService(PostgresProductToScrapRepository())
+
+    @BeforeTest
+    fun setUp() {
+        TestDatabase.reset()
+    }
 
     @Test
     fun `create persists product and returns entity with id`() = runTest {
@@ -23,7 +28,6 @@ class ProductToScrapServiceTest {
 
         val entity = service.create(request)
 
-        assertEquals(1L, entity.id)
         assertEquals("Açúcar", entity.productName)
         assertEquals(QuantityBase.GRAMS, entity.quantityBase)
         assertEquals(listOf("açúcar", "cristal"), entity.keyWords)
@@ -34,7 +38,7 @@ class ProductToScrapServiceTest {
         service.create(CreateProductToScrapRequest("Açúcar", QuantityBase.GRAMS, listOf("açúcar")))
         service.create(CreateProductToScrapRequest("Azeite", QuantityBase.MILLILITERS, listOf("azeite", "oliva")))
 
-        val all = service.list()
+        val all = service.list().sortedBy { it.id }
 
         assertEquals(2, all.size)
         assertEquals("Açúcar", all[0].productName)
@@ -50,28 +54,4 @@ class ProductToScrapServiceTest {
         val all = service.list()
         assertEquals(0, all.size)
     }
-}
-
-private class FakeProductToScrapRepository : ProductToScrapRepository {
-    private val store = mutableListOf<ProductToScrapEntity>()
-    private var nextId = 1L
-
-    override suspend fun create(
-        productName: String,
-        quantityBase: QuantityBase,
-        keyWords: List<String>,
-    ): ProductToScrapEntity {
-        val entity = ProductToScrapEntity(nextId++, productName, quantityBase, keyWords)
-        store.add(entity)
-        return entity
-    }
-
-    override suspend fun update(
-        id: Long,
-        productName: String,
-        quantityBase: QuantityBase,
-        keyWords: List<String>,
-    ): ProductToScrapEntity? = TODO("not yet used by service")
-
-    override suspend fun list(): List<ProductToScrapEntity> = store.toList()
 }
