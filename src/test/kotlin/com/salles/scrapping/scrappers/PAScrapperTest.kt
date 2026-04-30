@@ -1,6 +1,10 @@
 package com.salles.scrapping.scrappers
 
 import com.salles.scrapping.data.PASearchRequest
+import com.salles.scrapping.data.PASearchResponse
+import com.salles.scrapping.data.ProductToScrap
+import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.domain.QuantityBase
 import com.salles.scrapping.scrapers.PAScrapper
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -37,7 +41,13 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        PAScrapper(client).scrap("arroz")
+        PAScrapper(client).scrap(ProductToScrapEntity(
+            0,
+            "arroz",
+            QuantityBase.GRAMS,
+            emptyList(),
+            emptyList()
+        ))
 
         assertEquals("https://api.vendas.gpa.digital/pa/search/search", capturedUrl)
         assertEquals(HttpMethod.Post, capturedMethod)
@@ -58,7 +68,13 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        PAScrapper(client).scrap("arroz")
+        PAScrapper(client).scrap(ProductToScrapEntity(
+            0,
+            "arroz",
+            QuantityBase.GRAMS,
+            emptyList(),
+            emptyList()
+        ))
 
         val parsed = Json.decodeFromString<PASearchRequest>(capturedBody)
         assertEquals("arroz", parsed.terms)
@@ -82,7 +98,13 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val scrappedValue = PAScrapper(client).scrap("arroz")
+        val scrappedValue = PAScrapper(client).scrap(ProductToScrapEntity(
+            0,
+            "arroz",
+            QuantityBase.GRAMS,
+            emptyList(),
+            emptyList()
+        ))
 
         assert(scrappedValue.isEmpty())
     }
@@ -118,7 +140,13 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val result = PAScrapper(client).scrap("açúcar")
+        val result = PAScrapper(client).scrap(ProductToScrapEntity(
+            0,
+            "açúcar",
+            QuantityBase.GRAMS,
+            emptyList(),
+            emptyList()
+        ))
 
         assertEquals(1, result.size)
         assertEquals("acucar refinado 1kg", result[0].name)
@@ -137,7 +165,13 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val result = PAScrapper(client).scrap("arroz")
+        val result = PAScrapper(client).scrap(ProductToScrapEntity(
+            0,
+            "arroz",
+            QuantityBase.GRAMS,
+            emptyList(),
+            emptyList()
+        ))
 
         assert(result.isEmpty())
     }
@@ -154,8 +188,97 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val result = PAScrapper(client).scrap("arroz")
+        val result = PAScrapper(client).scrap(ProductToScrapEntity(
+            0,
+            "arroz",
+            QuantityBase.GRAMS,
+            emptyList(),
+            emptyList()
+        ))
 
         assert(result.isEmpty())
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters extracts ml lowercase`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 800, name = "Suco de laranja 800ml", brand = "Brand")
+        val productToScrap = ProductToScrap("suco", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        // price=800 centavos, volume=800ml → 800/800=1.0 → normalizeForMillicent(1.0)=10000
+        assertEquals(10000, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters extracts ML uppercase`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 800, name = "Suco de laranja 800ML", brand = "Brand")
+        val productToScrap = ProductToScrap("suco", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        assertEquals(10000, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters extracts ml with space`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 800, name = "Suco de laranja 800 ml", brand = "Brand")
+        val productToScrap = ProductToScrap("suco", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        assertEquals(10000, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters extracts L uppercase`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 400, name = "Leite Integral 1L", brand = "Brand")
+        val productToScrap = ProductToScrap("leite", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        // price=400 centavos, volume=1L=1000ml → 400/1000=0.4 → normalizeForMillicent(0.4)=4000
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters extracts l lowercase`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 400, name = "Leite Integral 1l", brand = "Brand")
+        val productToScrap = ProductToScrap("leite", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters extracts L with space`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 400, name = "Leite Integral 1 L", brand = "Brand")
+        val productToScrap = ProductToScrap("leite", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters returns 0 when no volume found`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 400, name = "Leite Integral", brand = "Brand")
+        val productToScrap = ProductToScrap("leite", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        assertEquals(0, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerMilliliters handles decimal liters`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 600, name = "Suco de uva 1,5L", brand = "Brand")
+        val productToScrap = ProductToScrap("suco", emptyList(), emptyList(), QuantityBase.MILLILITERS)
+        // 1.5L = 1500ml → 600/1500=0.4 → normalizeForMillicent(0.4)=4000
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrap, product))
     }
 }
