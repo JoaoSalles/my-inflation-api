@@ -1,1 +1,0 @@
-ALTER TABLE products_to_scrap ADD CONSTRAINT uq_products_to_scrap_product_name UNIQUE (product_name);

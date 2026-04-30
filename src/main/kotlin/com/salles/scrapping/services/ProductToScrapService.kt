@@ -10,8 +10,10 @@ class ProductToScrapService(
     suspend fun create(request: CreateProductToScrapRequest): ProductToScrapEntity =
         repository.create(
             productName  = request.productName,
+            search       = request.search,
             quantityBase = request.quantityBase,
             keyWords     = request.keyWords,
+            denyWords    = request.denyWords,
         )
 
     suspend fun list(): List<ProductToScrapEntity> = repository.list()

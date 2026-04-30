@@ -52,14 +52,14 @@ class ProductToScrapRoutesTest {
     fun `POST products returns 201 with entity on success`() = testApp {
         val response = client.post("/products") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody("""{"productName":"Açúcar","quantityBase":"GRAMS","keyWords":["açúcar","cristal"]}""")
+            setBody("""{"productName":"Açúcar","search":"açúcar cristal","quantityBase":"GRAMS","keyWords":["açúcar","cristal"]}""")
         }
         assertEquals(HttpStatusCode.Created, response.status)
     }
 
     @Test
     fun `POST products returns 409 when product name already exists`() = testApp {
-        val body = """{"productName":"Açúcar","quantityBase":"GRAMS","keyWords":[]}"""
+        val body = """{"productName":"Açúcar","search":"açúcar","quantityBase":"GRAMS","keyWords":[]}"""
         client.post("/products") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
             setBody(body)
@@ -77,16 +77,16 @@ class ProductToScrapRoutesTest {
     ) {
         val response = client.post("/products") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody("""{"productName":"Açúcar","quantityBase":"GRAMS","keyWords":[]}""")
+            setBody("""{"productName":"Açúcar","search":"açúcar","quantityBase":"GRAMS","keyWords":[]}""")
         }
         assertEquals(HttpStatusCode.InternalServerError, response.status)
     }
 }
 
 private class ThrowingProductToScrapRepository(private val ex: Exception) : ProductToScrapRepository {
-    override suspend fun create(productName: String, quantityBase: QuantityBase, keyWords: List<String>): ProductToScrapEntity =
+    override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity =
         throw ex
-    override suspend fun update(id: Long, productName: String, quantityBase: QuantityBase, keyWords: List<String>) =
+    override suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>) =
         TODO("not needed")
     override suspend fun list(): List<ProductToScrapEntity> = emptyList()
 }

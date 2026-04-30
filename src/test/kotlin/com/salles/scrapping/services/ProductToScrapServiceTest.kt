@@ -22,6 +22,7 @@ class ProductToScrapServiceTest {
     fun `create persists product and returns entity with id`() = runTest {
         val request = CreateProductToScrapRequest(
             productName  = "Açúcar",
+            search       = "açúcar cristal",
             quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("açúcar", "cristal"),
         )
@@ -29,21 +30,34 @@ class ProductToScrapServiceTest {
         val entity = service.create(request)
 
         assertEquals("Açúcar", entity.productName)
+        assertEquals("açúcar cristal", entity.search)
         assertEquals(QuantityBase.GRAMS, entity.quantityBase)
         assertEquals(listOf("açúcar", "cristal"), entity.keyWords)
     }
 
     @Test
     fun `list returns all persisted products`() = runTest {
-        service.create(CreateProductToScrapRequest("Açúcar", QuantityBase.GRAMS, listOf("açúcar")))
-        service.create(CreateProductToScrapRequest("Azeite", QuantityBase.MILLILITERS, listOf("azeite", "oliva")))
+        service.create(CreateProductToScrapRequest(
+            "Açúcar refinado",
+            "açúcar refinado",
+            QuantityBase.GRAMS,
+            listOf("refinado"),
+            emptyList()
+        ))
+        service.create(CreateProductToScrapRequest(
+            "Azeite",
+            "azeite oliva",
+            QuantityBase.MILLILITERS,
+            listOf("azeite", "oliva"),
+            emptyList()
+        ))
 
         val all = service.list().sortedBy { it.id }
 
         assertEquals(2, all.size)
-        assertEquals("Açúcar", all[0].productName)
+        assertEquals("Açúcar refinado", all[0].productName)
         assertEquals(QuantityBase.GRAMS, all[0].quantityBase)
-        assertEquals(listOf("açúcar"), all[0].keyWords)
+        assertEquals(listOf("refinado"), all[0].keyWords)
         assertEquals("Azeite", all[1].productName)
         assertEquals(QuantityBase.MILLILITERS, all[1].quantityBase)
         assertEquals(listOf("azeite", "oliva"), all[1].keyWords)

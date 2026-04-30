@@ -37,7 +37,8 @@ dependencies {
     implementation(libs.postgresql)
 
     testImplementation(kotlin("test"))
-    testImplementation(libs.h2database.h2)
+    testImplementation(libs.testcontainers.core)
+    testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(ktorLibs.server.testHost)
     testImplementation(libs.ktor.client.mock)

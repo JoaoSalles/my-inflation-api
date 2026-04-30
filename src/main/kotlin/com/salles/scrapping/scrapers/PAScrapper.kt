@@ -27,7 +27,7 @@ class PAScrapper(
         try {
             val response: HttpResponse = client.post("https://api.vendas.gpa.digital/pa/search/search") {
                 contentType(ContentType.Application.Json)
-                setBody(PASearchRequest(product.productName))
+                setBody(PASearchRequest(product.search))
             }
             if (!response.status.isSuccess()) {
                 log.error("PA search failed for term='$product': HTTP ${response.status}")

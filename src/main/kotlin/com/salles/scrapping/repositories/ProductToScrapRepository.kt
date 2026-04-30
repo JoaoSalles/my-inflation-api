@@ -14,8 +14,8 @@ import org.jetbrains.exposed.v1.jdbc.update
 import java.sql.SQLException
 
 interface ProductToScrapRepository {
-    suspend fun create(productName: String, quantityBase: QuantityBase, keyWords: List<String>): ProductToScrapEntity
-    suspend fun update(id: Long, productName: String, quantityBase: QuantityBase, keyWords: List<String>): ProductToScrapEntity?
+    suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity
+    suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity?
     suspend fun list(): List<ProductToScrapEntity>
 }
 
@@ -23,21 +23,27 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
 
     override suspend fun create(
         productName: String,
+        search: String,
         quantityBase: QuantityBase,
         keyWords: List<String>,
+        denyWords: List<String>,
     ): ProductToScrapEntity = try {
         dbQuery {
             val insertedId = ProductsToScrap.insert {
                 it[ProductsToScrap.productName]  = productName
+                it[ProductsToScrap.search]       = search
                 it[ProductsToScrap.quantityBase] = quantityBase
-                it[ProductsToScrap.keywords]     = Json.encodeToString(keyWords)
+                it[ProductsToScrap.keyWords]     = Json.encodeToString(keyWords)
+                it[ProductsToScrap.denyWords]     = Json.encodeToString(denyWords)
             } get ProductsToScrap.id
 
             ProductToScrapEntity(
                 id           = insertedId,
                 productName  = productName,
+                search       = search,
                 quantityBase = quantityBase,
                 keyWords     = keyWords,
+                denyWords    = denyWords
             )
         }
     } catch (e: Exception) {
@@ -52,16 +58,27 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
     override suspend fun update(
         id: Long,
         productName: String,
+        search: String,
         quantityBase: QuantityBase,
         keyWords: List<String>,
+        denyWords: List<String>,
     ): ProductToScrapEntity? = dbQuery {
         val updated = ProductsToScrap.update({ ProductsToScrap.id eq id }) {
             it[ProductsToScrap.productName]  = productName
+            it[ProductsToScrap.search]       = search
             it[ProductsToScrap.quantityBase] = quantityBase
-            it[ProductsToScrap.keywords]     = Json.encodeToString(keyWords)
+            it[ProductsToScrap.keyWords]     = Json.encodeToString(keyWords)
+            it[ProductsToScrap.denyWords]    = Json.encodeToString(denyWords)
         }
         if (updated == 0) return@dbQuery null
-        ProductToScrapEntity(id = id, productName = productName, quantityBase = quantityBase, keyWords = keyWords)
+        ProductToScrapEntity(
+            id           = id,
+            productName  = productName,
+            search       = search,
+            quantityBase = quantityBase,
+            keyWords     = keyWords,
+            denyWords    = denyWords
+        )
     }
 
     override suspend fun list(): List<ProductToScrapEntity> = dbQuery {
@@ -69,8 +86,10 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
             ProductToScrapEntity(
                 id           = row[ProductsToScrap.id],
                 productName  = row[ProductsToScrap.productName],
+                search       = row[ProductsToScrap.search],
                 quantityBase = row[ProductsToScrap.quantityBase],
-                keyWords     = Json.decodeFromString(row[ProductsToScrap.keywords]),
+                keyWords     = Json.decodeFromString(row[ProductsToScrap.keyWords]),
+                denyWords    = Json.decodeFromString(row[ProductsToScrap.denyWords])
             )
         }
     }

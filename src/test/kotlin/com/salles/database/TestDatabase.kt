@@ -1,16 +1,29 @@
 package com.salles.database
 
 import com.salles.scrapping.db.PostgresDatabaseFactory
-import org.h2.jdbcx.JdbcDataSource
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.utility.DockerImageName
 
 object TestDatabase {
+    private val container: PostgreSQLContainer<*> =
+        PostgreSQLContainer(
+            DockerImageName.parse("timescale/timescaledb:latest-pg16")
+                .asCompatibleSubstituteFor("postgres")
+        ).apply { start() }
+
     init {
-        val dataSource = JdbcDataSource().apply {
-            setURL("jdbc:h2:mem:test_db;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-            user = "sa"
-            password = ""
-        }
+        val dataSource = HikariDataSource(HikariConfig().apply {
+            jdbcUrl         = container.jdbcUrl
+            username        = container.username
+            password        = container.password
+            driverClassName = "org.postgresql.Driver"
+            maximumPoolSize = 2
+            isAutoCommit    = false
+            validate()
+        })
         PostgresDatabaseFactory(dataSource)
     }
 

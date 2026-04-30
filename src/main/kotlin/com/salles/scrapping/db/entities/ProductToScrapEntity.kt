@@ -7,6 +7,8 @@ import kotlinx.serialization.Serializable
 data class ProductToScrapEntity(
     val id: Long,
     val productName: String,
+    val search: String,
     val quantityBase: QuantityBase,
     val keyWords: List<String>,
+    val denyWords: List<String>,
 )
