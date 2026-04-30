@@ -200,6 +200,58 @@ class PAScrapperTest {
     }
 
     @Test
+    fun `parseProductsPerUnits returns raw price for singular Unidade`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 599, name = "Detergente 1 Unidade", brand = "Brand")
+        val productToScrap = ProductToScrap("detergente", emptyList(), emptyList(), QuantityBase.UNITS)
+        assertEquals(599, scrapper.parseProductsPerUnits(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerUnits returns raw price for plural Unidades`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 1299, name = "Sabão em Pó 10 Unidades", brand = "Brand")
+        val productToScrap = ProductToScrap("sabão", emptyList(), emptyList(), QuantityBase.UNITS)
+        // price=1299 centavos / 10 units = 129 per unit
+        assertEquals(129, scrapper.parseProductsPerUnits(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerUnits returns raw price for lowercase unidade`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 399, name = "Esponja 1 unidade", brand = "Brand")
+        val productToScrap = ProductToScrap("esponja", emptyList(), emptyList(), QuantityBase.UNITS)
+        assertEquals(399, scrapper.parseProductsPerUnits(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerUnits returns raw price for lowercase unidades`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 799, name = "Rolo de Papel 6 unidades", brand = "Brand")
+        val productToScrap = ProductToScrap("papel", emptyList(), emptyList(), QuantityBase.UNITS)
+        // price=799 centavos / 6 units = 133 per unit (integer division)
+        assertEquals(133, scrapper.parseProductsPerUnits(productToScrap, product))
+    }
+
+    @Test
+    fun `parseProductsPerUnits returns 0 when no Unidade pattern found`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(price = 599, name = "Detergente Liquido 500ml", brand = "Brand")
+        val productToScrap = ProductToScrap("detergente", emptyList(), emptyList(), QuantityBase.UNITS)
+        assertEquals(0, scrapper.parseProductsPerUnits(productToScrap, product))
+    }
+
+    @Test
     fun `parseProductsPerMilliliters extracts ml lowercase`() = runTest {
         val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
             install(ContentNegotiation) { json() }

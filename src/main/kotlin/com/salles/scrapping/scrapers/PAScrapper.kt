@@ -34,6 +34,7 @@ class PAScrapper(
                 return emptyList()
             }
             val products = response.body<PAApiResponse>().products.filter { it.unitPriceHomogeneousKit == null }
+
             val parsedProducts = this.parseProducts(
                 ProductToScrap(product.productName, product.keyWords, product.denyWords, product.quantityBase),
                 products
@@ -58,8 +59,14 @@ class PAScrapper(
         for (product in products) {
             if (product.name.isEmpty()) continue
 
-            val hasKeyword = productToScrap.keyWords.all { product.name.contains(it) }
-            val hasDenyword = productToScrap.denyWords.all { product.name.contains(it) }
+            var hasKeyword = true;
+            var hasDenyword = false
+            if (!productToScrap.keyWords.isEmpty()) {
+                hasKeyword = productToScrap.keyWords.all { product.name.contains(it) }
+            }
+            if (!productToScrap.denyWords.isEmpty()) {
+                 hasDenyword = productToScrap.denyWords.all { product.name.contains(it) }
+            }
 
             if (!hasKeyword || hasDenyword) continue
 
@@ -83,8 +90,12 @@ class PAScrapper(
                     )
                 }
                 QuantityBase.UNITS -> {
+                    val pricePerUnit = this.parseProductsPerUnits(productToScrap, product)
+
+                    if (pricePerUnit == 0) continue
+
                     parsedProduct = PASearchResponse(
-                        product.price,
+                        pricePerUnit,
                         productToScrap.name,
                         brand
                     )
@@ -133,7 +144,16 @@ class PAScrapper(
                 ?.toDouble()
             ?: return 0
 
-        return (normalizeForMillicent((product.price ?: 0) / grams))
+        return normalizeForMillicent((product.price ?: 0) / grams)
+    }
+
+    suspend fun parseProductsPerUnits(
+        productName: DomainProductToScrap,
+        product: SearchResponse
+    ): Int {
+        val unidadeRegex = Regex("""(\d+)\s*[Uu]nidades?""")
+        val units = unidadeRegex.find(product.name)?.groupValues?.get(1)?.toIntOrNull() ?: return 0
+        return (product.price ?: 0) / units
     }
 
     suspend fun parseProductsPerMilliliters(
@@ -144,13 +164,13 @@ class PAScrapper(
         val mlRegex = Regex("""(\d+(?:[.,]\d+)?)\s*ml\b""", RegexOption.IGNORE_CASE)
         val lRegex = Regex("""(\d+(?:[.,]\d+)?)\s*l\b""", RegexOption.IGNORE_CASE)
 
-        val milliliters: Double = mlRegex.find(name)?.groupValues?.get(1)
+        val milliliters: Double = lRegex.find(name)?.groupValues?.get(1)
             ?.replace(',', '.')
             ?.toDouble()
-            ?: lRegex.find(name)?.groupValues?.get(1)
+            ?.times(1000)
+            ?: mlRegex.find(name)?.groupValues?.get(1)
                 ?.replace(',', '.')
                 ?.toDouble()
-                ?.times(1000)
             ?: return 0
 
         return normalizeForMillicent((product.price ?: 0) / milliliters)
