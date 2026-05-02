@@ -1,11 +1,16 @@
 package com.salles
 
 import com.salles.scrapping.db.PostgresDatabaseFactory
+import com.salles.scrapping.repositories.PostgresPriceRepository
 import com.salles.scrapping.repositories.PostgresProductToScrapRepository
 import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.routes.productToScrapRoutes
 import com.salles.scrapping.routes.scrappingRoutes
 import com.salles.scrapping.services.ProductToScrapService
+import com.salles.scrapping.repositories.PriceRepository
+import com.salles.scrapping.routes.priceRoutes
+import com.salles.scrapping.services.PriceService
+
 import com.salles.scrapping.services.ScrappingService
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
@@ -38,6 +43,8 @@ fun Application.module() {
             single { ScrappingService(get()) }
             single<ProductToScrapRepository> { PostgresProductToScrapRepository() }
             single { ProductToScrapService(get()) }
+            single<PriceRepository> { PostgresPriceRepository() }
+            single { PriceService(get()) }
         })
     }
 
@@ -45,4 +52,5 @@ fun Application.module() {
 
     scrappingRoutes()
     productToScrapRoutes()
+    priceRoutes()
 }

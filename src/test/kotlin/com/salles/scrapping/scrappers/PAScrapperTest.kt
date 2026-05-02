@@ -44,9 +44,10 @@ class PAScrapperTest {
         PAScrapper(client).scrap(ProductToScrapEntity(
             0,
             "arroz",
+            "arroz",
             QuantityBase.GRAMS,
             emptyList(),
-            emptyList()
+            denyWords = emptyList(),
         ))
 
         assertEquals("https://api.vendas.gpa.digital/pa/search/search", capturedUrl)
@@ -70,6 +71,7 @@ class PAScrapperTest {
 
         PAScrapper(client).scrap(ProductToScrapEntity(
             0,
+            "arroz",
             "arroz",
             QuantityBase.GRAMS,
             emptyList(),
@@ -100,6 +102,7 @@ class PAScrapperTest {
 
         val scrappedValue = PAScrapper(client).scrap(ProductToScrapEntity(
             0,
+            "arroz",
             "arroz",
             QuantityBase.GRAMS,
             emptyList(),
@@ -143,6 +146,7 @@ class PAScrapperTest {
         val result = PAScrapper(client).scrap(ProductToScrapEntity(
             0,
             "açúcar",
+            "açúcar",
             QuantityBase.GRAMS,
             emptyList(),
             emptyList()
@@ -168,6 +172,7 @@ class PAScrapperTest {
         val result = PAScrapper(client).scrap(ProductToScrapEntity(
             0,
             "arroz",
+            "arroz",
             QuantityBase.GRAMS,
             emptyList(),
             emptyList()
@@ -190,6 +195,7 @@ class PAScrapperTest {
 
         val result = PAScrapper(client).scrap(ProductToScrapEntity(
             0,
+            "arroz",
             "arroz",
             QuantityBase.GRAMS,
             emptyList(),
