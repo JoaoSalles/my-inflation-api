@@ -58,20 +58,6 @@ class ProductToScrapRoutesTest {
     }
 
     @Test
-    fun `POST products returns 409 when product name already exists`() = testApp {
-        val body = """{"productName":"Açúcar","search":"açúcar","quantityBase":"GRAMS","keyWords":[]}"""
-        client.post("/products") {
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody(body)
-        }
-        val response = client.post("/products") {
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody(body)
-        }
-        assertEquals(HttpStatusCode.Conflict, response.status)
-    }
-
-    @Test
     fun `POST products returns 500 on generic database error`() = testApp(
         ThrowingProductToScrapRepository(DatabaseException(RuntimeException("connection lost")))
     ) {

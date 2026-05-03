@@ -1,11 +1,14 @@
 package com.salles.scrapping.scrappers
 
+import com.salles.database.TestDatabase
 import com.salles.scrapping.data.PASearchRequest
 import com.salles.scrapping.data.PASearchResponse
 import com.salles.scrapping.data.ProductToScrap
 import com.salles.scrapping.db.entities.ProductToScrapEntity
 import com.salles.scrapping.domain.QuantityBase
+import com.salles.scrapping.repositories.PostgresPriceRepository
 import com.salles.scrapping.scrapers.PAScrapper
+import com.salles.scrapping.services.PriceService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -19,10 +22,17 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class PAScrapperTest {
+
+    @BeforeTest
+    fun setUp() {
+        TestDatabase.reset()
+    }
 
     @Test
     fun `scrap posts to correct URL`() = runTest {
@@ -338,5 +348,49 @@ class PAScrapperTest {
         val productToScrap = ProductToScrap("suco", emptyList(), emptyList(), QuantityBase.MILLILITERS)
         // 1.5L = 1500ml → 600/1500=0.4 → normalizeForMillicent(0.4)=4000
         assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrap, product))
+    }
+
+    @Test
+    fun `scrap saves one price row per parsed product`() = runTest {
+        val json = """
+            {
+              "products": [
+                { "price": 5.99, "name": "Açúcar Cristal 1kg",  "brand": "União",     "unitPriceHomogeneousKit": null },
+                { "price": 7.49, "name": "Açúcar Cristal 2kg",  "brand": "Caravelas", "unitPriceHomogeneousKit": null },
+                { "price": 3.00, "name": "Açúcar kit",          "brand": "Caravelas", "unitPriceHomogeneousKit": null }
+              ]
+            }
+        """.trimIndent()
+
+        val client = HttpClient(MockEngine {
+            respond(
+                content = ByteReadChannel(json),
+                status  = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }) { install(ContentNegotiation) { json() } }
+
+        val priceService = PriceService(PostgresPriceRepository())
+        val scrapper = PAScrapper(client, priceService)
+
+        scrapper.scrap(ProductToScrapEntity(
+            id           = 0,
+            productName  = "açúcar",
+            search       = "açúcar cristal",
+            quantityBase = QuantityBase.GRAMS,
+            keyWords     = listOf("cristal"),
+            denyWords    = emptyList(),
+        ))
+
+        val saved = priceService.list(null, null, 0, 20)
+        // third product has unitPriceHomogeneousKit ≠ null → filtered out before parsing
+        // first two have different brands → both saved
+        assertEquals(2, saved.size)
+        val brands = saved.map { it.brand }.toSet()
+        assertTrue("União" in brands)
+        assertTrue("Caravelas" in brands)
+        assertTrue(saved.all { it.product == "açúcar" })
+        assertTrue(saved.all { it.quantityBase == QuantityBase.GRAMS })
+        assertTrue(saved.all { it.price > 0 })
     }
 }

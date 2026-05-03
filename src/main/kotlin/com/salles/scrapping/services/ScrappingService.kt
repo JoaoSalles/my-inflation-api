@@ -12,9 +12,10 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class ScrappingService(
     private val client: HttpClient,
+    private val priceService: PriceService,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val PAScrapper = PAScrapper(client);
+    private val PAScrapper = PAScrapper(client, priceService);
 
     suspend fun launchScrapping(products: List<ProductToScrapEntity> = emptyList()) {
         products.forEach { product  ->

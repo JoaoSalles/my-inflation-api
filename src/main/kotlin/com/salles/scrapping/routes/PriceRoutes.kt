@@ -13,7 +13,7 @@ fun Application.priceRoutes() {
     val service: PriceService by inject()
 
     routing {
-        get("/price") {
+        get("/prices") {
             try {
                 val from     = call.request.queryParameters["from"]?.let { Instant.parse(it) }
                 val to       = call.request.queryParameters["to"]?.let { Instant.parse(it) }

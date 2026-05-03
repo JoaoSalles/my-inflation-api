@@ -3,12 +3,14 @@ package com.salles.scrapping.scrapers
 import com.salles.scrapping.data.PAApiResponse
 import com.salles.scrapping.data.PASearchRequest
 import com.salles.scrapping.data.PASearchResponse
+import com.salles.scrapping.data.PriceDTO
 import com.salles.scrapping.data.ProductToScrap
 import com.salles.scrapping.db.entities.ProductToScrapEntity
 import com.salles.scrapping.domain.QuantityBase
 import com.salles.scrapping.domain.ProductToScrap as DomainProductToScrap
 import com.salles.scrapping.domain.Scrapper
 import com.salles.scrapping.domain.SearchResponse
+import com.salles.scrapping.services.PriceService
 import com.salles.scrapping.utils.normalizeForMillicent
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -21,6 +23,7 @@ private val log = LoggerFactory.getLogger(PAScrapper::class.java)
 
 class PAScrapper(
     private val client: HttpClient,
+    private val priceService: PriceService? = null,
 ) : Scrapper<PASearchResponse> {
 
     override suspend fun scrap(product: ProductToScrapEntity): List<PASearchResponse> {
@@ -39,7 +42,21 @@ class PAScrapper(
                 ProductToScrap(product.productName, product.keyWords, product.denyWords, product.quantityBase),
                 products
                 )
-            log.info("PA search for term='${product.productName}' returned ${parsedProducts.size} products: ${parsedProducts}")
+
+            parsedProducts.forEach { parsed ->
+                try {
+                    priceService?.create(PriceDTO(
+                        productName  = product.productName,
+                        brand        = parsed.brand,
+                        price        = parsed.price ?: 0,
+                        quantityBase = product.quantityBase,
+                        location     = 0,
+                    ))
+                } catch (e: Exception) {
+                    // TODO create a flow for errors, to keep track of scrapping that failed
+                    log.error("Failed to save price for '${product.productName}' - brand: ${parsed.brand}", e)
+                }
+            }
             return products
         } catch (e: Exception) {
             // TODO create a flow for errors, to keep track of scrapping that failed
@@ -52,9 +69,9 @@ class PAScrapper(
     override suspend fun parseProducts(
         productToScrap: DomainProductToScrap,
         products: List<SearchResponse>
-    ): List<SearchResponse> {
+    ): List<PASearchResponse> {
         val seenBrands = mutableMapOf<String, Boolean>()
-        val result = mutableListOf<SearchResponse>()
+        val result = mutableListOf<PASearchResponse>()
 
         for (product in products) {
             if (product.name.isEmpty()) continue

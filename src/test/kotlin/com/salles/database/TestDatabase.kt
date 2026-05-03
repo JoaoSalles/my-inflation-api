@@ -28,7 +28,7 @@ object TestDatabase {
     }
 
     fun reset() = transaction {
+        exec("DELETE FROM prices")
         exec("DELETE FROM products_to_scrap")
-        exec("DELETE FROM price_snapshots")
     }
 }

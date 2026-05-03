@@ -40,7 +40,7 @@ fun Application.module() {
                     }
                 }
             }
-            single { ScrappingService(get()) }
+            single { ScrappingService(get(), get()) }
             single<ProductToScrapRepository> { PostgresProductToScrapRepository() }
             single { ProductToScrapService(get()) }
             single<PriceRepository> { PostgresPriceRepository() }

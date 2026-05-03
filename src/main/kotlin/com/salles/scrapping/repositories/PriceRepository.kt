@@ -5,12 +5,13 @@ import com.salles.scrapping.db.dbQuery
 import com.salles.scrapping.db.entities.PriceEntity
 import com.salles.scrapping.db.tables.Price
 import com.salles.scrapping.domain.QuantityBase
+import kotlin.time.Instant
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.andWhere
-import kotlin.time.Instant
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import kotlin.time.Clock
 
 interface PriceRepository {
     suspend fun create(productName: String, brand: String, price: Int, quantityBase: QuantityBase, location: Int = 0): PriceEntity
@@ -27,7 +28,8 @@ class PostgresPriceRepository : PriceRepository {
         location: Int,
     ): PriceEntity = try {
         dbQuery {
-            val now = kotlin.time.Clock.System.now()
+            val now: Instant = Clock.System.now()
+
             Price.insert {
                 it[Price.time]         = now
                 it[Price.product]      = productName
@@ -35,8 +37,8 @@ class PostgresPriceRepository : PriceRepository {
                 it[Price.price]        = price
                 it[Price.quantityBase] = quantityBase
                 it[Price.location]     = location
+                it[Price.createdAt]    = now
             }
-
             PriceEntity(
                 time         = now,
                 location     = location,
@@ -59,8 +61,8 @@ class PostgresPriceRepository : PriceRepository {
     ): List<PriceEntity> = dbQuery {
         Price.selectAll()
             .apply {
-                if (from != null) andWhere { Price.time greaterEq from }
-                if (to != null) andWhere { Price.time lessEq to }
+                from?.let { andWhere { Price.time greaterEq it } }
+                to?.let   { andWhere { Price.time lessEq   it } }
             }
             .limit(pageSize)
             .offset((page * pageSize).toLong())
