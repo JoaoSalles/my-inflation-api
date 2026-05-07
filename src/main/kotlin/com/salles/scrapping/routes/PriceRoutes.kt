@@ -22,7 +22,7 @@ fun Application.priceRoutes() {
                     from     = call.request.queryParameters["from"]?.let { Instant.parse(it) },
                     to       = call.request.queryParameters["to"]?.let { Instant.parse(it) },
                     page     = call.request.queryParameters["page"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0,
-                    pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20,
+                    pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(0, 100) ?: 20,
                 )
                 call.respond(HttpStatusCode.OK, service.list(request))
             } catch (e: Exception) {

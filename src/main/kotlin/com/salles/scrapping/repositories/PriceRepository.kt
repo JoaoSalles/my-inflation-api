@@ -90,7 +90,7 @@ class PostgresPriceRepository : PriceRepository {
                 to?.let      { andWhere { Price.time lessEq   it } }
             }
             .orderBy(Price.time, SortOrder.DESC)
-            .limit(pageSize + 1)
+            .apply { if (pageSize != 0) limit(pageSize + 1) }
             .offset((page * pageSize).toLong())
             .map { row ->
                 PriceEntity(
@@ -117,7 +117,7 @@ class PostgresPriceRepository : PriceRepository {
     ): Pair<List<PriceDailyAvgEntity>, Boolean> = dbQuery {
         val dayBucket = CustomFunction<Instant>("time_bucket", Price.time.columnType, stringLiteral("1 day"), Price.time)
         val avgPrice  = Price.price.avg()
-
+        log.error("AQUI ${pageSize} ${pageSize == 0}")
         val rows = Price.select(dayBucket, Price.product, avgPrice)
             .apply {
                 andWhere { Price.product like "$product%" }
@@ -126,13 +126,7 @@ class PostgresPriceRepository : PriceRepository {
             }
             .groupBy(dayBucket, Price.product)
             .orderBy(dayBucket to SortOrder.DESC)
-            .apply {
-                pageSize.let {
-                    if (pageSize != 0) {
-                        limit(pageSize + 1)
-                    }
-                }
-            }
+            .apply { if (pageSize != 0) limit(pageSize + 1) }
             .offset((page * pageSize).toLong())
             .map { row ->
                 PriceDailyAvgEntity(
