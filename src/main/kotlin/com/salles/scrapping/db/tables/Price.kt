@@ -8,7 +8,7 @@ import org.jetbrains.exposed.v1.datetime.timestamp
 object Price : Table("prices") {
     val time            = timestamp("time").defaultExpression(CurrentTimestamp)
     val location        = integer("location").default(0)
-    val product         = varchar("product", 250)
+    val product         = varchar("product", 100)
     val price           = integer("price")
     val brand           = varchar("brand", 100).default("")
     val quantityBase = enumerationByName<QuantityBase>("quantity_base", 20).default(QuantityBase.GRAMS)

@@ -11,7 +11,7 @@ import javax.sql.DataSource
 class PostgresDatabaseFactory(dataSource: DataSource) {
 
     init {
-        runMigrations(dataSource)
+//        runMigrations(dataSource)
         Database.connect(dataSource)
     }
 
@@ -35,6 +35,8 @@ class PostgresDatabaseFactory(dataSource: DataSource) {
             Flyway.configure()
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
+                .baselineOnMigrate(true)
+                .baselineVersion("0")
                 .load()
                 .migrate()
         }
