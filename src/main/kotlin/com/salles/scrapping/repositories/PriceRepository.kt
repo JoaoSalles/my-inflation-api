@@ -104,7 +104,8 @@ class PostgresPriceRepository : PriceRepository {
                     createdAt    = row[Price.createdAt],
                 )
             }
-        Pair(rows.take(pageSize), rows.size > pageSize)
+        if (pageSize == 0) Pair(rows, false)
+        else Pair(rows.take(pageSize), rows.size > pageSize)
     }
 
     override suspend fun listProductPrice(
@@ -125,7 +126,13 @@ class PostgresPriceRepository : PriceRepository {
             }
             .groupBy(dayBucket, Price.product)
             .orderBy(dayBucket to SortOrder.DESC)
-            .limit(pageSize + 1)
+            .apply {
+                pageSize.let {
+                    if (pageSize != 0) {
+                        limit(pageSize + 1)
+                    }
+                }
+            }
             .offset((page * pageSize).toLong())
             .map { row ->
                 PriceDailyAvgEntity(
@@ -134,6 +141,7 @@ class PostgresPriceRepository : PriceRepository {
                     avgPrice = row[avgPrice]?.toDouble() ?: 0.0,
                 )
             }
-        Pair(rows.take(pageSize), rows.size > pageSize)
+        if (pageSize == 0) Pair(rows, false)
+        else Pair(rows.take(pageSize), rows.size > pageSize)
     }
 }

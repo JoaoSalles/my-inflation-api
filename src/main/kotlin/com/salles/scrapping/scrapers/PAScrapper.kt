@@ -71,7 +71,6 @@ class PAScrapper(
         productToScrap: DomainProductToScrap,
         products: List<SearchResponse>
     ): List<PASearchResponse> {
-        val seenBrands = mutableMapOf<String, Boolean>()
         val result = mutableListOf<PASearchResponse>()
 
         for (product in products) {
@@ -89,7 +88,6 @@ class PAScrapper(
             if (!hasKeyword || hasDenyword) continue
 
             val brand = (product as? PASearchResponse)?.brand ?: continue
-            if (seenBrands.containsKey(brand)) continue
 
             var parsedProduct: PASearchResponse;
             when (productToScrap.quantityBase) {
@@ -134,7 +132,6 @@ class PAScrapper(
                 }
             }
 
-            seenBrands[brand] = true
             result.add(parsedProduct)
         }
         return result
