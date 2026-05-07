@@ -11,6 +11,7 @@ object Price : Table("prices") {
     val product         = varchar("product", 100)
     val price           = integer("price")
     val brand           = varchar("brand", 100).default("")
-    val quantityBase = enumerationByName<QuantityBase>("quantity_base", 20).default(QuantityBase.GRAMS)
+    val quantityBase    = enumerationByName<QuantityBase>("quantity_base", 20).default(QuantityBase.GRAMS)
+    val productLabel    = text("product_label").nullable()
     val createdAt       = timestamp("created_at").defaultExpression(CurrentTimestamp)
 }

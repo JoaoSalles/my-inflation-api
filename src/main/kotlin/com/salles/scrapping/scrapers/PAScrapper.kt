@@ -51,6 +51,7 @@ class PAScrapper(
                         price        = parsed.price ?: 0,
                         quantityBase = product.quantityBase,
                         location     = 0,
+                        productLabel = product.productName.take(80),
                     ))
                 } catch (e: Exception) {
                     // TODO create a flow for errors, to keep track of scrapping that failed

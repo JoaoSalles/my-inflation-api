@@ -12,5 +12,6 @@ data class PriceEntity(
     val price: Int,
     val brand: String,
     val quantityBase: QuantityBase,
+    val productLabel: String?,
     val createdAt: Instant,
 )

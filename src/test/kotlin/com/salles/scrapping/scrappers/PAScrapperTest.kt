@@ -1,6 +1,7 @@
 package com.salles.scrapping.scrappers
 
 import com.salles.database.TestDatabase
+import com.salles.scrapping.data.ListProductRequest
 import com.salles.scrapping.data.PASearchRequest
 import com.salles.scrapping.data.PASearchResponse
 import com.salles.scrapping.data.ProductToScrap
@@ -382,7 +383,7 @@ class PAScrapperTest {
             denyWords    = emptyList(),
         ))
 
-        val saved = priceService.list(null, null, 0, 20)
+        val saved = priceService.list(ListProductRequest())
         // third product has unitPriceHomogeneousKit ≠ null → filtered out before parsing
         // first two have different brands → both saved
         assertEquals(2, saved.size)
@@ -392,5 +393,77 @@ class PAScrapperTest {
         assertTrue(saved.all { it.product == "açúcar" })
         assertTrue(saved.all { it.quantityBase == QuantityBase.GRAMS })
         assertTrue(saved.all { it.price > 0 })
+    }
+
+    @Test
+    fun `scrap stores product_label as first 80 chars of productName`() = runTest {
+        val longName = "A".repeat(100)
+        val json = """
+            {
+              "products": [
+                { "price": 5.99, "name": "Açúcar Cristal 1kg", "brand": "União", "unitPriceHomogeneousKit": null }
+              ]
+            }
+        """.trimIndent()
+
+        val client = HttpClient(MockEngine {
+            respond(
+                content = ByteReadChannel(json),
+                status  = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }) { install(ContentNegotiation) { json() } }
+
+        val priceService = PriceService(PostgresPriceRepository())
+        val scrapper = PAScrapper(client, priceService)
+
+        scrapper.scrap(ProductToScrapEntity(
+            id           = 0,
+            productName  = longName,
+            search       = "açúcar cristal",
+            quantityBase = QuantityBase.GRAMS,
+            keyWords     = emptyList(),
+            denyWords    = emptyList(),
+        ))
+
+        val saved = priceService.list(ListProductRequest())
+        assertEquals(1, saved.size)
+        assertEquals("A".repeat(80), saved[0].productLabel)
+    }
+
+    @Test
+    fun `scrap stores product_label unchanged when productName is shorter than 80 chars`() = runTest {
+        val shortName = "açúcar"
+        val json = """
+            {
+              "products": [
+                { "price": 5.99, "name": "Açúcar Cristal 1kg", "brand": "União", "unitPriceHomogeneousKit": null }
+              ]
+            }
+        """.trimIndent()
+
+        val client = HttpClient(MockEngine {
+            respond(
+                content = ByteReadChannel(json),
+                status  = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }) { install(ContentNegotiation) { json() } }
+
+        val priceService = PriceService(PostgresPriceRepository())
+        val scrapper = PAScrapper(client, priceService)
+
+        scrapper.scrap(ProductToScrapEntity(
+            id           = 0,
+            productName  = shortName,
+            search       = "açúcar cristal",
+            quantityBase = QuantityBase.GRAMS,
+            keyWords     = emptyList(),
+            denyWords    = emptyList(),
+        ))
+
+        val saved = priceService.list(ListProductRequest())
+        assertEquals(1, saved.size)
+        assertEquals(shortName, saved[0].productLabel)
     }
 }

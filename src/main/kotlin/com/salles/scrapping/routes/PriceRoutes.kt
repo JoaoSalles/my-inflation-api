@@ -1,5 +1,7 @@
 package com.salles.scrapping.routes
 
+import com.salles.scrapping.data.ListProductPriceRequest
+import com.salles.scrapping.data.ListProductRequest
 import com.salles.scrapping.services.PriceService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
@@ -13,13 +15,33 @@ fun Application.priceRoutes() {
     val service: PriceService by inject()
 
     routing {
-        get("/prices") {
+        get("/product") {
             try {
-                val from     = call.request.queryParameters["from"]?.let { Instant.parse(it) }
-                val to       = call.request.queryParameters["to"]?.let { Instant.parse(it) }
-                val page     = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
-                val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull() ?: 20
-                call.respond(HttpStatusCode.OK, service.list(from, to, page, pageSize))
+                val request = ListProductRequest(
+                    product  = call.request.queryParameters["product"]?.take(100),
+                    from     = call.request.queryParameters["from"]?.let { Instant.parse(it) },
+                    to       = call.request.queryParameters["to"]?.let { Instant.parse(it) },
+                    page     = call.request.queryParameters["page"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0,
+                    pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20,
+                )
+                call.respond(HttpStatusCode.OK, service.list(request))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
+            }
+        }
+        get("/product-prices") {
+            try {
+                val product = call.request.queryParameters["product"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "product is required"))
+
+                val request = ListProductPriceRequest(
+                    product  = product.take(100),
+                    from     = call.request.queryParameters["from"]?.let { Instant.parse(it) },
+                    to       = call.request.queryParameters["to"]?.let { Instant.parse(it) },
+                    page     = call.request.queryParameters["page"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0,
+                    pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull() ?: 0,
+                )
+                call.respond(HttpStatusCode.OK, service.listProductPrice(request))
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             }

@@ -10,4 +10,5 @@ data class PriceDTO(
     val price: Int,
     val quantityBase: QuantityBase,
     val location: Int,
+    val productLabel: String? = null,
 )
