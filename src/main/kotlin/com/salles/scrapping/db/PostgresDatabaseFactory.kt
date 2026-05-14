@@ -11,7 +11,7 @@ import javax.sql.DataSource
 class PostgresDatabaseFactory(dataSource: DataSource) {
 
     init {
-        runMigrations(dataSource)
+//        runMigrations(dataSource)
         Database.connect(dataSource)
     }
 

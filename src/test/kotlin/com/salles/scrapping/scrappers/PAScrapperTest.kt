@@ -383,7 +383,7 @@ class PAScrapperTest {
             denyWords    = emptyList(),
         ))
 
-        val saved = priceService.list(ListProductRequest())
+        val saved = priceService.list(ListProductRequest()).data
         // third product has unitPriceHomogeneousKit ≠ null → filtered out before parsing
         // first two have different brands → both saved
         assertEquals(2, saved.size)
@@ -426,7 +426,7 @@ class PAScrapperTest {
             denyWords    = emptyList(),
         ))
 
-        val saved = priceService.list(ListProductRequest())
+        val saved = priceService.list(ListProductRequest()).data
         assertEquals(1, saved.size)
         assertEquals("A".repeat(80), saved[0].productLabel)
     }
@@ -462,7 +462,7 @@ class PAScrapperTest {
             denyWords    = emptyList(),
         ))
 
-        val saved = priceService.list(ListProductRequest())
+        val saved = priceService.list(ListProductRequest()).data
         assertEquals(1, saved.size)
         assertEquals(shortName, saved[0].productLabel)
     }

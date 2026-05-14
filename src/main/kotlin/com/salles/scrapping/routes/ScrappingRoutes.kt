@@ -1,8 +1,8 @@
 package com.salles.scrapping.routes
 
+import com.salles.scrapping.data.ScrapRequest
 import com.salles.scrapping.services.ProductToScrapService
 import com.salles.scrapping.services.ScrappingService
-import io.ktor.client.HttpClient
 import io.ktor.server.application.*
 import io.ktor.http.*
 import io.ktor.server.response.*
@@ -15,7 +15,8 @@ fun Application.scrappingRoutes() {
 
     routing {
         get("/scrapping") {
-            val list = productToScrapService.list();
+            val request = ScrapRequest(product = call.parameters["product"])
+            val list = productToScrapService.list(request).data
             service.launchScrapping(list)
             call.respond(HttpStatusCode.Accepted)
         }

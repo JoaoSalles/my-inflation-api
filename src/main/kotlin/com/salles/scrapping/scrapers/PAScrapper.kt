@@ -72,17 +72,16 @@ class PAScrapper(
         products: List<SearchResponse>
     ): List<PASearchResponse> {
         val result = mutableListOf<PASearchResponse>()
-
         for (product in products) {
             if (product.name.isEmpty()) continue
 
             var hasKeyword = true;
             var hasDenyword = false
             if (!productToScrap.keyWords.isEmpty()) {
-                hasKeyword = productToScrap.keyWords.all { product.name.contains(it) }
+                hasKeyword = productToScrap.keyWords.all { product.name.lowercase().contains(it.lowercase()) }
             }
             if (!productToScrap.denyWords.isEmpty()) {
-                 hasDenyword = productToScrap.denyWords.all { product.name.contains(it) }
+                 hasDenyword = productToScrap.denyWords.all { product.name.lowercase().contains(it.lowercase()) }
             }
 
             if (!hasKeyword || hasDenyword) continue

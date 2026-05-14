@@ -52,7 +52,7 @@ class ProductToScrapServiceTest {
             emptyList()
         ))
 
-        val all = service.list().sortedBy { it.id }
+        val all = service.list().data.sortedBy { it.id }
 
         assertEquals(2, all.size)
         assertEquals("Açúcar refinado", all[0].productName)
@@ -65,7 +65,44 @@ class ProductToScrapServiceTest {
 
     @Test
     fun `list returns empty when no products exist`() = runTest {
-        val all = service.list()
+        val all = service.list().data
         assertEquals(0, all.size)
+    }
+
+    @Test
+    fun `listDistinct returns one entry per productName`() = runTest {
+        service.create(CreateProductToScrapRequest(
+            productName  = "Açúcar",
+            search       = "açúcar cristal",
+            quantityBase = QuantityBase.GRAMS,
+            keyWords     = listOf("cristal"),
+            denyWords    = emptyList(),
+        ))
+        service.create(CreateProductToScrapRequest(
+            productName  = "Açúcar",
+            search       = "açúcar refinado",
+            quantityBase = QuantityBase.GRAMS,
+            keyWords     = listOf("refinado"),
+            denyWords    = emptyList(),
+        ))
+        service.create(CreateProductToScrapRequest(
+            productName  = "Azeite",
+            search       = "azeite oliva",
+            quantityBase = QuantityBase.MILLILITERS,
+            keyWords     = listOf("azeite"),
+            denyWords    = emptyList(),
+        ))
+
+        val result = service.listDistinct().data
+
+        assertEquals(2, result.size)
+        val names = result.map { it.productName }.toSet()
+        assertEquals(setOf("Açúcar", "Azeite"), names)
+    }
+
+    @Test
+    fun `listDistinct returns empty when no products exist`() = runTest {
+        val result = service.listDistinct().data
+        assertEquals(0, result.size)
     }
 }

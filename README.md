@@ -1,33 +1,10 @@
 # my-inflation
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
+This is a project which will keep track of market prices, the idea is to aggregate multiple sources of
+market websites look up for products, get theirs value and keep track in time.
 
-Here are some useful links to get you started:
- * [Ktor Documentation](https://ktor.io/docs/home.html)
- * [Ktor GitHub page](https://github.com/ktorio/ktor)
- * [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). [Request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up).
+We will be using timescaleDB to keep hyper tables of time, to make the queries faster.
 
+Right now we are only scrapping pao de açucar, which is the easieast one to prove the concept,
+the next websites will need a more complex scrapping getting the html and parsing it.
 
-## Features
-Here's a list of features included in this project:
-
-| Name | Description |
-|------|-------------|
-| [kotlinx.serialization](https://start.ktor.io/p/io.ktor/server-kotlinx-serialization) | Handles JSON serialization using kotlinx.serialization library |
-| [Content Negotiation](https://start.ktor.io/p/io.ktor/server-content-negotiation) | Provides automatic content conversion according to Content-Type and Accept headers |
-| [PostgreSQL](https://start.ktor.io/p/org.jetbrains/server-postgres) | Adds Postgres database support |
-| [Koin](https://start.ktor.io/p/io.insert-koin/server-koin) | Provides dependency injection |
-
-
-## Building & Running
-To build or run the project, use one of the following tasks:
-
-
-| Task | Description |
-|------|-------------|
-
-If the server starts successfully, you'll see the following output:
-```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
-```
