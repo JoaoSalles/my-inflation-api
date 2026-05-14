@@ -9,6 +9,6 @@
   min_machines_running = 0
 
 [[vm]]
-  memory = "1bb"
+  memory = "1gb"
   cpu_kind = "shared"
   cpus = 1
