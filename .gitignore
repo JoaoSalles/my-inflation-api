@@ -4,4 +4,5 @@ build/*
 .gradle
 .worktrees
 plans/*
+docs/*
 src/main/kotlin/com/salles/scrapping/utils/scripts/*
