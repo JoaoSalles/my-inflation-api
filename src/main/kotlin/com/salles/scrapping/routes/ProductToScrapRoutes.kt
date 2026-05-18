@@ -2,6 +2,7 @@ package com.salles.scrapping.routes
 
 import com.salles.scrapping.db.ProductNameAlreadyExistsException
 import com.salles.scrapping.data.CreateProductToScrapRequest
+import com.salles.scrapping.scrapers.PAScrapper
 import com.salles.scrapping.services.ProductToScrapService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
@@ -13,6 +14,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 
 fun Application.productToScrapRoutes() {
     val service: ProductToScrapService by inject()

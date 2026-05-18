@@ -131,7 +131,7 @@ class PostgresPriceRepository : PriceRepository {
                 PriceDailyAvgEntity(
                     day      = row[dayBucket],
                     product  = row[Price.product],
-                    avgPrice = row[avgPrice]?.toDouble() ?: 0.0,
+                    avgPrice = row[avgPrice]?.toInt() ?: 0,
                 )
             }
         if (pageSize == 0) Pair(rows, false)

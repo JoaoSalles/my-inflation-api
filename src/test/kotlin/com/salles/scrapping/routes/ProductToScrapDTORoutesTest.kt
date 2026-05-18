@@ -2,7 +2,7 @@ package com.salles.scrapping.routes
 
 import com.salles.scrapping.db.DatabaseException
 import com.salles.database.TestDatabase
-import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.domain.ProductToScrap
 import com.salles.scrapping.repositories.PostgresProductToScrapRepository
 import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.domain.QuantityBase
@@ -30,7 +30,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ProductToScrapRoutesTest {
+class ProductToScrapDTORoutesTest {
 
     @BeforeTest
     fun setUp() {
@@ -109,10 +109,10 @@ class ProductToScrapRoutesTest {
 }
 
 private class ThrowingProductToScrapRepository(private val ex: Exception) : ProductToScrapRepository {
-    override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity =
+    override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrap =
         throw ex
     override suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>) =
         TODO("not needed")
-    override suspend fun list(): Pair<List<ProductToScrapEntity>, Boolean> = Pair(emptyList(), false)
-    override suspend fun listDistinct(): Pair<List<ProductToScrapEntity>, Boolean> = Pair(emptyList(), false)
+    override suspend fun list(product: String?): Pair<List<ProductToScrap>, Boolean> = Pair(emptyList(), false)
+    override suspend fun listDistinct(): Pair<List<ProductToScrap>, Boolean> = Pair(emptyList(), false)
 }

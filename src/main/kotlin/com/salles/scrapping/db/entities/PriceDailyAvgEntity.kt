@@ -7,5 +7,5 @@ import kotlinx.serialization.Serializable
 data class PriceDailyAvgEntity(
     val day: Instant,
     val product: String,
-    val avgPrice: Double,
+    val avgPrice: Int,
 )

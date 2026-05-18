@@ -1,9 +1,8 @@
 package com.salles.scrapping.domain
 
-import com.salles.scrapping.db.entities.ProductToScrapEntity
-
+import com.salles.scrapping.domain.ProductToScrap
 
 interface Scrapper<T> {
-    suspend fun scrap(product: ProductToScrapEntity): List<T>
+    suspend fun scrap(product: ProductToScrap): List<T>
     suspend fun parseProducts(productToScrap: ProductToScrap, products: List<SearchResponse>): List<SearchResponse>
 }

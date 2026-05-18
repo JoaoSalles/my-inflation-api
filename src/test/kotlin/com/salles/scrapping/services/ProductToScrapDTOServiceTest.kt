@@ -9,7 +9,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ProductToScrapServiceTest {
+class ProductToScrapDTOServiceTest {
 
     private val service = ProductToScrapService(PostgresProductToScrapRepository())
 
@@ -29,7 +29,7 @@ class ProductToScrapServiceTest {
 
         val entity = service.create(request)
 
-        assertEquals("Açúcar", entity.productName)
+        assertEquals("Açúcar", entity.name)
         assertEquals("açúcar cristal", entity.search)
         assertEquals(QuantityBase.GRAMS, entity.quantityBase)
         assertEquals(listOf("açúcar", "cristal"), entity.keyWords)
@@ -52,15 +52,15 @@ class ProductToScrapServiceTest {
             emptyList()
         ))
 
-        val all = service.list().data.sortedBy { it.id }
+        val all = service.list().data.sortedBy { it.name }
 
         assertEquals(2, all.size)
-        assertEquals("Açúcar refinado", all[0].productName)
-        assertEquals(QuantityBase.GRAMS, all[0].quantityBase)
-        assertEquals(listOf("refinado"), all[0].keyWords)
-        assertEquals("Azeite", all[1].productName)
-        assertEquals(QuantityBase.MILLILITERS, all[1].quantityBase)
-        assertEquals(listOf("azeite", "oliva"), all[1].keyWords)
+        assertEquals("Açúcar refinado", all[1].name)
+        assertEquals(QuantityBase.GRAMS, all[1].quantityBase)
+        assertEquals(listOf("refinado"), all[1].keyWords)
+        assertEquals("Azeite", all[0].name)
+        assertEquals(QuantityBase.MILLILITERS, all[0].quantityBase)
+        assertEquals(listOf("azeite", "oliva"), all[0].keyWords)
     }
 
     @Test
@@ -96,7 +96,7 @@ class ProductToScrapServiceTest {
         val result = service.listDistinct().data
 
         assertEquals(2, result.size)
-        val names = result.map { it.productName }.toSet()
+        val names = result.map { it.name }.toSet()
         assertEquals(setOf("Açúcar", "Azeite"), names)
     }
 

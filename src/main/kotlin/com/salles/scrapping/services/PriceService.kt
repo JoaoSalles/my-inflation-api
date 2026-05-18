@@ -23,7 +23,6 @@ class PriceService(
         val (data, hasNext) = repository.list(request.product, request.from, request.to, request.page, request.pageSize)
         return PagedResponse(data, request.page, request.pageSize, hasNext)
     }
-
     suspend fun listProductPrice(request: ListProductPriceRequest): PagedResponse<PriceDailyAvgEntity> {
         val (data, hasNext) = repository.listProductPrice(request.product, request.from, request.to, request.page, request.pageSize)
         return PagedResponse(data, request.page, request.pageSize, hasNext)

@@ -4,10 +4,9 @@ import com.salles.scrapping.data.PAApiResponse
 import com.salles.scrapping.data.PASearchRequest
 import com.salles.scrapping.data.PASearchResponse
 import com.salles.scrapping.data.PriceDTO
-import com.salles.scrapping.data.ProductToScrap
-import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.data.ProductToScrapDTO
 import com.salles.scrapping.domain.QuantityBase
-import com.salles.scrapping.domain.ProductToScrap as DomainProductToScrap
+import com.salles.scrapping.domain.ProductToScrap
 import com.salles.scrapping.domain.Scrapper
 import com.salles.scrapping.domain.SearchResponse
 import com.salles.scrapping.services.PriceService
@@ -21,16 +20,17 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(PAScrapper::class.java)
 
+
 class PAScrapper(
     private val client: HttpClient,
     private val priceService: PriceService? = null,
 ) : Scrapper<PASearchResponse> {
 
-    override suspend fun scrap(product: ProductToScrapEntity): List<PASearchResponse> {
+    override suspend fun scrap(product: ProductToScrap): List<PASearchResponse> {
         try {
             val response: HttpResponse = client.post("https://api.vendas.gpa.digital/pa/search/search") {
                 contentType(ContentType.Application.Json)
-                setBody(PASearchRequest(product.search))
+                setBody(PASearchRequest(product.search ?: ""))
             }
             if (!response.status.isSuccess()) {
                 log.error("PA search failed for term='$product': HTTP ${response.status}")
@@ -39,23 +39,29 @@ class PAScrapper(
             val products = response.body<PAApiResponse>().products.filter { it.unitPriceHomogeneousKit == null }
 
             val parsedProducts = this.parseProducts(
-                ProductToScrap(product.productName, product.keyWords, product.denyWords, product.quantityBase),
+                ProductToScrapDTO(
+                    product.name,
+                    product.search ?: "",
+                    product.keyWords ?: emptyList(),
+                    product.denyWords ?: emptyList(),
+                    product.quantityBase
+                ),
                 products
                 )
 
             parsedProducts.forEach { parsed ->
                 try {
                     priceService?.create(PriceDTO(
-                        productName  = product.productName,
+                        productName  = product.name,
                         brand        = parsed.brand,
                         price        = parsed.price ?: 0,
                         quantityBase = product.quantityBase,
                         location     = 0,
-                        productLabel = product.productName.take(80),
+                        productLabel = product.name.take(80),
                     ))
                 } catch (e: Exception) {
                     // TODO create a flow for errors, to keep track of scrapping that failed
-                    log.error("Failed to save price for '${product.productName}' - brand: ${parsed.brand}", e)
+                    log.error("Failed to save price for '${product.name}' - brand: ${parsed.brand}", e)
                 }
             }
             return products
@@ -68,7 +74,7 @@ class PAScrapper(
     }
 
     override suspend fun parseProducts(
-        productToScrap: DomainProductToScrap,
+        productToScrap: ProductToScrap,
         products: List<SearchResponse>
     ): List<PASearchResponse> {
         val result = mutableListOf<PASearchResponse>()
@@ -77,11 +83,13 @@ class PAScrapper(
 
             var hasKeyword = true;
             var hasDenyword = false
-            if (!productToScrap.keyWords.isEmpty()) {
-                hasKeyword = productToScrap.keyWords.all { product.name.lowercase().contains(it.lowercase()) }
+            val keyWords = productToScrap.keyWords
+            val denyWords = productToScrap.denyWords
+            if (!keyWords.isNullOrEmpty()) {
+                hasKeyword = keyWords.all { product.name.lowercase().contains(it.lowercase()) }
             }
-            if (!productToScrap.denyWords.isEmpty()) {
-                 hasDenyword = productToScrap.denyWords.all { product.name.lowercase().contains(it.lowercase()) }
+            if (!denyWords.isNullOrEmpty()) {
+                hasDenyword = denyWords.all { product.name.lowercase().contains(it.lowercase()) }
             }
 
             if (!hasKeyword || hasDenyword) continue
@@ -142,7 +150,7 @@ class PAScrapper(
     * */
 
     suspend fun parseProductsPerGram(
-        productName: DomainProductToScrap,
+        productName: ProductToScrap,
         product: SearchResponse
     ): Int {
         val name = product.name
@@ -162,16 +170,16 @@ class PAScrapper(
     }
 
     suspend fun parseProductsPerUnits(
-        productName: DomainProductToScrap,
+        productName: ProductToScrap,
         product: SearchResponse
     ): Int {
         val unidadeRegex = Regex("""(\d+)\s*[Uu]nidades?""")
-        val units = unidadeRegex.find(product.name)?.groupValues?.get(1)?.toIntOrNull() ?: return 0
-        return (product.price ?: 0) / units
+        val units = unidadeRegex.find(product.name)?.groupValues?.get(1)?.toIntOrNull() ?: return 1
+        return ((product.price ?: 0) / units) * 10;
     }
 
     suspend fun parseProductsPerMilliliters(
-        productName: DomainProductToScrap,
+        productName: ProductToScrap,
         product: SearchResponse
     ): Int {
         val name = product.name

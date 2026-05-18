@@ -5,6 +5,8 @@ import com.salles.scrapping.db.ProductNameAlreadyExistsException
 import com.salles.scrapping.db.dbQuery
 import com.salles.scrapping.db.entities.ProductToScrapEntity
 import com.salles.scrapping.db.tables.ProductsToScrap
+import com.salles.scrapping.domain.ProductToScrap
+import com.salles.scrapping.data.ProductToScrapResponse
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -15,10 +17,10 @@ import org.jetbrains.exposed.v1.jdbc.update
 import java.sql.SQLException
 
 interface ProductToScrapRepository {
-    suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity
-    suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity?
-    suspend fun list(product: String? = null): Pair<List<ProductToScrapEntity>, Boolean>
-    suspend fun listDistinct(): Pair<List<ProductToScrapEntity>, Boolean>
+    suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrap
+    suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrap?
+    suspend fun list(product: String? = null): Pair<List<ProductToScrap>, Boolean>
+    suspend fun listDistinct(): Pair<List<ProductToScrap>, Boolean>
 }
 
 class PostgresProductToScrapRepository : ProductToScrapRepository {
@@ -83,7 +85,7 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
         )
     }
 
-    override suspend fun list(product: String?): Pair<List<ProductToScrapEntity>, Boolean> = dbQuery {
+    override suspend fun list(product: String?): Pair<List<ProductToScrap>, Boolean> = dbQuery {
         val query = if (product != null)
             ProductsToScrap.selectAll().where { ProductsToScrap.productName eq product }
         else
@@ -103,17 +105,17 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
         Pair(rows, false)
     }
 
-    override suspend fun listDistinct(): Pair<List<ProductToScrapEntity>, Boolean> = dbQuery {
+    override suspend fun listDistinct(): Pair<List<ProductToScrap>, Boolean> = dbQuery {
         val rows = ProductsToScrap.selectAll()
             .orderBy(ProductsToScrap.productName to SortOrder.ASC)
             .map { row ->
                 ProductToScrapEntity(
-                    id           = row[ProductsToScrap.id],
-                    productName  = row[ProductsToScrap.productName],
-                    search       = row[ProductsToScrap.search],
+                    id = row[ProductsToScrap.id],
+                    productName = row[ProductsToScrap.productName],
                     quantityBase = row[ProductsToScrap.quantityBase],
-                    keyWords     = Json.decodeFromString(row[ProductsToScrap.keyWords]),
-                    denyWords    = Json.decodeFromString(row[ProductsToScrap.denyWords]),
+                    search = "",
+                    keyWords = null,
+                    denyWords = null,
                 )
             }
             .distinctBy { it.productName }
