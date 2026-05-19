@@ -2,7 +2,7 @@ package com.salles.scrapping.routes
 
 import com.salles.scrapping.db.DatabaseException
 import com.salles.database.TestDatabase
-import com.salles.scrapping.domain.ProductToScrap
+import com.salles.scrapping.db.entities.ProductToScrapEntity
 import com.salles.scrapping.repositories.PostgresProductToScrapRepository
 import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.domain.QuantityBase
@@ -73,13 +73,14 @@ class ProductToScrapDTORoutesTest {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
             setBody("""{"productName":"Açúcar","search":"açúcar refinado","quantityBase":"GRAMS","keyWords":["refinado"],"denyWords":[]}""")
         }
-        client.post("/product") {
+        val postReponse = client.post("/product") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
             setBody("""{"productName":"Azeite","search":"azeite oliva","quantityBase":"MILLILITERS","keyWords":["azeite"],"denyWords":[]}""")
         }
 
         val response = client.get("/product")
 
+        assertEquals(HttpStatusCode.Created, postReponse.status)
         assertEquals(HttpStatusCode.OK, response.status)
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject["data"]!!.jsonArray
         assertEquals(2, body.size)
@@ -109,10 +110,10 @@ class ProductToScrapDTORoutesTest {
 }
 
 private class ThrowingProductToScrapRepository(private val ex: Exception) : ProductToScrapRepository {
-    override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrap =
+    override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity =
         throw ex
     override suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>) =
         TODO("not needed")
-    override suspend fun list(product: String?): Pair<List<ProductToScrap>, Boolean> = Pair(emptyList(), false)
-    override suspend fun listDistinct(): Pair<List<ProductToScrap>, Boolean> = Pair(emptyList(), false)
+    override suspend fun list(product: String?): Pair<List<ProductToScrapEntity>, Boolean> = Pair(emptyList(), false)
+    override suspend fun listDistinct(): Pair<List<ProductToScrapEntity>, Boolean> = Pair(emptyList(), false)
 }

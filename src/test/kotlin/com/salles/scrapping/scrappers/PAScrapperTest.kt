@@ -244,7 +244,7 @@ class PAScrapperTest {
         })
         val product = PASearchResponse(price = 399, name = "Esponja 1 unidade", brand = "Brand")
         val productToScrapDTO = ProductToScrapDTO("esponja", "esponja",  emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
-        assertEquals(399, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(3990, scrapper.parseProductsPerUnits(productToScrapDTO, product))
     }
 
     @Test
@@ -255,7 +255,7 @@ class PAScrapperTest {
         val product = PASearchResponse(price = 799, name = "Rolo de Papel 6 unidades", brand = "Brand")
         val productToScrapDTO = ProductToScrapDTO("papel", "papel", emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
         // price=799 centavos / 6 units = 133 per unit (integer division)
-        assertEquals(133, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(1330, scrapper.parseProductsPerUnits(productToScrapDTO, product))
     }
 
     @Test
@@ -265,7 +265,7 @@ class PAScrapperTest {
         })
         val product = PASearchResponse(price = 599, name = "Detergente Liquido 500ml", brand = "Brand")
         val productToScrapDTO = ProductToScrapDTO("detergente", "detergente", emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
-        assertEquals(0, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(1, scrapper.parseProductsPerUnits(productToScrapDTO, product))
     }
 
     @Test

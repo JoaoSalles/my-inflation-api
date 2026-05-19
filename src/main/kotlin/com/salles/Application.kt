@@ -11,6 +11,7 @@ import com.salles.scrapping.repositories.PriceRepository
 import com.salles.scrapping.routes.priceRoutes
 import com.salles.scrapping.services.PriceService
 
+import com.salles.scrapping.plugins.CloudflareValidation
 import com.salles.scrapping.services.ScrappingService
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
@@ -27,6 +28,13 @@ fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
+
+    System.getenv("CLOUDFLARE_SECRET")?.let { secret ->
+        install(CloudflareValidation) {
+            this.secret = secret
+        }
+    }
+
     install(Koin) {
         modules(module {
             single<HttpClient> {

@@ -4,12 +4,12 @@ import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.data.CreateProductToScrapRequest
 import com.salles.scrapping.data.PagedResponse
 import com.salles.scrapping.data.ScrapRequest
-import com.salles.scrapping.domain.ProductToScrap
+import com.salles.scrapping.db.entities.ProductToScrapEntity
 
 class ProductToScrapService(
     private val repository: ProductToScrapRepository,
 ) {
-    suspend fun create(request: CreateProductToScrapRequest): ProductToScrap =
+    suspend fun create(request: CreateProductToScrapRequest): ProductToScrapEntity =
         repository.create(
             productName  = request.productName,
             search       = request.search,
@@ -18,12 +18,12 @@ class ProductToScrapService(
             denyWords    = request.denyWords,
         )
 
-    suspend fun list(request: ScrapRequest = ScrapRequest()): PagedResponse<ProductToScrap> {
+    suspend fun list(request: ScrapRequest = ScrapRequest()): PagedResponse<ProductToScrapEntity> {
         val (data, hasNext) = repository.list(request.product)
         return PagedResponse(data, 0, 0, hasNext)
     }
 
-    suspend fun listDistinct(): PagedResponse<ProductToScrap> {
+    suspend fun listDistinct(): PagedResponse<ProductToScrapEntity> {
         val (data, hasNext) = repository.listDistinct()
         return PagedResponse(data, 0, 0, hasNext)
     }
