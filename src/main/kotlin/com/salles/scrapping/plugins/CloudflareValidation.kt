@@ -7,7 +7,7 @@ import io.ktor.server.response.respond
 
 class CloudflareValidationConfig {
     var secret: String = ""
-    var headerName: String = "X-CF-Origin-Token"
+    var headerName: String = "Origin-Token"
 }
 
 val CloudflareValidation = createApplicationPlugin(
