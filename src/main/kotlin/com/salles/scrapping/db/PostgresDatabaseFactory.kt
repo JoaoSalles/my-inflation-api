@@ -8,12 +8,14 @@ import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import javax.sql.DataSource
 
-class PostgresDatabaseFactory(dataSource: DataSource) {
+class PostgresDatabaseFactory(private val dataSource: DataSource) {
 
     init {
 //        runMigrations(dataSource)
         Database.connect(dataSource)
     }
+
+    fun close() = (dataSource as? java.io.Closeable)?.close()
 
     constructor(config: ApplicationConfig) : this(buildHikariDataSource(config))
 

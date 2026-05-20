@@ -18,11 +18,11 @@ class ScrappingService(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val PAScrapper = PAScrapper(client, priceService);
 
-    suspend fun launchScrapping(products: List<ProductToScrap> = emptyList()) {
-        products.forEach { product  ->
-            delay(500.milliseconds)
-            scope.launch {
-                PAScrapper.scrap(product)
+    fun launchScrapping(products: List<ProductToScrap> = emptyList()) {
+        scope.launch {
+            products.forEach { product ->
+                delay(500.milliseconds)
+                launch { PAScrapper.scrap(product) }
             }
         }
     }

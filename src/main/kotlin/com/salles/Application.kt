@@ -56,7 +56,8 @@ fun Application.module() {
         })
     }
 
-    PostgresDatabaseFactory(environment.config)
+    val db = PostgresDatabaseFactory(environment.config)
+    monitor.subscribe(ApplicationStopped) { db.close() }
 
     scrappingRoutes()
     productToScrapRoutes()

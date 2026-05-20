@@ -11,4 +11,4 @@ db:
     user: ${DB_USER:salles}
     password: ${DB_PASSWORD:salles}
     pool:
-        maximumPoolSize: 10
+        maximumPoolSize: 5
