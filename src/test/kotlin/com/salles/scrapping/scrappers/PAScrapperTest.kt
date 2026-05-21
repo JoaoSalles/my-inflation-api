@@ -165,7 +165,7 @@ class PAScrapperTest {
 
         assertEquals(1, result.size)
         assertEquals("acucar refinado 1kg", result[0].name)
-        assertEquals(599, result[0].price)
+        assertEquals(5990, result[0].price)
         assertEquals("União", result[0].brand)
     }
 
@@ -222,8 +222,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 599, name = "Detergente 1 Unidade", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("detergente", "detergente", emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
-        assertEquals(5990, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(5990, scrapper.parseProductsPerUnits(product))
     }
 
     @Test
@@ -232,9 +231,8 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 1299, name = "Sabão em Pó 10 Unidades", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("sabão", "sabão", emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
         // price=1299 centavos / 10 units * 10 = 1290
-        assertEquals(1290, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(1290, scrapper.parseProductsPerUnits(product))
     }
 
     @Test
@@ -243,8 +241,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 399, name = "Esponja 1 unidade", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("esponja", "esponja",  emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
-        assertEquals(3990, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(3990, scrapper.parseProductsPerUnits(product))
     }
 
     @Test
@@ -253,9 +250,8 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 799, name = "Rolo de Papel 6 unidades", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("papel", "papel", emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
         // price=799 centavos / 6 units = 133 per unit (integer division)
-        assertEquals(1330, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(1330, scrapper.parseProductsPerUnits(product))
     }
 
     @Test
@@ -264,8 +260,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 599, name = "Detergente Liquido 500ml", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("detergente", "detergente", emptyList<String>(), emptyList<String>(), QuantityBase.UNITS)
-        assertEquals(1, scrapper.parseProductsPerUnits(productToScrapDTO, product))
+        assertEquals(1, scrapper.parseProductsPerUnits(product))
     }
 
     @Test
@@ -274,9 +269,8 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 800, name = "Suco de laranja 800ml", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("suco", "suco", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
         // price=800 centavos, volume=800ml → 800/800=1.0 → normalizeForMillicent(1.0)=10000
-        assertEquals(10000, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(10000, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -285,8 +279,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 800, name = "Suco de laranja 800ML", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("suco", "suco", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
-        assertEquals(10000, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(10000, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -295,8 +288,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 800, name = "Suco de laranja 800 ml", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("suco", "suco", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
-        assertEquals(10000, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(10000, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -305,9 +297,8 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 400, name = "Leite Integral 1L", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("leite", "leite", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
         // price=400 centavos, volume=1L=1000ml → 400/1000=0.4 → normalizeForMillicent(0.4)=4000
-        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -316,8 +307,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 400, name = "Leite Integral 1l", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("leite", "leite", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
-        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -326,8 +316,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 400, name = "Leite Integral 1 L", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("leite", "leite", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
-        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -336,8 +325,7 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 400, name = "Leite Integral", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("leite", "leite", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
-        assertEquals(0, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(0, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -346,9 +334,8 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         })
         val product = PASearchResponse(price = 600, name = "Suco de uva 1,5L", brand = "Brand")
-        val productToScrapDTO = ProductToScrapDTO("suco", "leite", emptyList<String>(), emptyList<String>(), QuantityBase.MILLILITERS)
         // 1.5L = 1500ml → 600/1500=0.4 → normalizeForMillicent(0.4)=4000
-        assertEquals(4000, scrapper.parseProductsPerMilliliters(productToScrapDTO, product))
+        assertEquals(4000, scrapper.parseProductsPerMilliliters(product))
     }
 
     @Test
@@ -429,6 +416,58 @@ class PAScrapperTest {
         val saved = priceService.list(ListProductRequest()).data
         assertEquals(1, saved.size)
         assertEquals("A".repeat(80), saved[0].productLabel)
+    }
+
+    @Test
+    fun `parseProducts filters out product whose name contains a denyword`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        val product = PASearchResponse(
+            price = 599,
+            name = "Compre 1 Café Torrado e Moído Tradicional União 500g  + Café Torrado e Moído Extra Forte  União 500 +  R\$0,01 Leve 1  Açucar Refinado UNIÃO 1Kg",
+            brand = "União"
+        )
+        val productToScrap = ProductToScrapDTO("café", "café", emptyList(), listOf("+"), QuantityBase.GRAMS)
+
+        val result = scrapper.parseProducts(productToScrap, listOf(product))
+
+        assertTrue(result.isEmpty(), "Product containing denyword '+' should be filtered out")
+    }
+
+    @Test
+    fun `scrap filters out products whose name contains a denyword`() = runTest {
+        val json = """
+            {
+              "products": [
+                {
+                  "price": 5.99,
+                  "name": "Compre 1 Café Torrado e Moído Tradicional União 500g  + Café Torrado e Moído Extra Forte  União 500 +  R${'$'}0,01 Leve 1  Açucar Refinado UNIÃO 1Kg",
+                  "brand": "União",
+                  "unitPriceHomogeneousKit": null
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val client = HttpClient(MockEngine {
+            respond(
+                content = ByteReadChannel(json),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }) { install(ContentNegotiation) { json() } }
+
+        val result = PAScrapper(client).scrap(ProductToScrapEntity(
+            id = 0,
+            productName = "café",
+            search = "café torrado",
+            quantityBase = QuantityBase.GRAMS,
+            keyWords = emptyList(),
+            denyWords = listOf("+"),
+        ))
+        print("result ${result}")
+        assertTrue(result.isEmpty(), "scrap() must not return products filtered out by a denyword")
     }
 
     @Test

@@ -64,7 +64,7 @@ class PAScrapper(
                     log.error("Failed to save price for '${product.name}' - brand: ${parsed.brand}", e)
                 }
             }
-            return products
+            return parsedProducts
         } catch (e: Exception) {
             // TODO create a flow for errors, to keep track of scrapping that failed
             // retry would be nice
@@ -81,7 +81,7 @@ class PAScrapper(
         for (product in products) {
             if (product.name.isEmpty()) continue
 
-            var hasKeyword = true;
+            var hasKeyword = true
             var hasDenyword = false
             val keyWords = productToScrap.keyWords
             val denyWords = productToScrap.denyWords
@@ -89,18 +89,17 @@ class PAScrapper(
                 hasKeyword = keyWords.all { product.name.lowercase().contains(it.lowercase()) }
             }
             if (!denyWords.isNullOrEmpty()) {
-                hasDenyword = denyWords.all { product.name.lowercase().contains(it.lowercase()) }
+                hasDenyword = denyWords.any { product.name.lowercase().contains(it.lowercase()) }
             }
 
             if (!hasKeyword || hasDenyword) continue
 
             val brand = (product as? PASearchResponse)?.brand ?: continue
 
-            var parsedProduct: PASearchResponse;
+            var parsedProduct: PASearchResponse
             when (productToScrap.quantityBase) {
                 QuantityBase.GRAMS -> {
                     val pricePerGram = this.parseProductsPerGram(
-                        productToScrap,
                         product,
                     )
 
@@ -108,12 +107,12 @@ class PAScrapper(
 
                     parsedProduct = PASearchResponse(
                         pricePerGram,
-                        productToScrap.name,
+                        product.name,
                         brand
                     )
                 }
                 QuantityBase.UNITS -> {
-                    val pricePerUnit = this.parseProductsPerUnits(productToScrap, product)
+                    val pricePerUnit = this.parseProductsPerUnits(product)
 
                     if (pricePerUnit == 0) continue
 
@@ -125,8 +124,7 @@ class PAScrapper(
                 }
                 QuantityBase.MILLILITERS -> {
                     val pricePerMilliliter = this.parseProductsPerMilliliters(
-                        productToScrap,
-                        product,
+                        product
                     )
 
                     if (pricePerMilliliter == 0) continue
@@ -149,8 +147,7 @@ class PAScrapper(
     * so the integer value will be a representation of original value divided by 10000
     * */
 
-    suspend fun parseProductsPerGram(
-        productName: ProductToScrap,
+    fun parseProductsPerGram(
         product: SearchResponse
     ): Int {
         val name = product.name
@@ -169,17 +166,15 @@ class PAScrapper(
         return normalizeForMillicent((product.price ?: 0) / grams)
     }
 
-    suspend fun parseProductsPerUnits(
-        productName: ProductToScrap,
+    fun parseProductsPerUnits(
         product: SearchResponse
     ): Int {
         val unidadeRegex = Regex("""(\d+)\s*[Uu]nidades?""")
         val units = unidadeRegex.find(product.name)?.groupValues?.get(1)?.toIntOrNull() ?: return 1
-        return ((product.price ?: 0) / units) * 10;
+        return ((product.price ?: 0) / units) * 10
     }
 
-    suspend fun parseProductsPerMilliliters(
-        productName: ProductToScrap,
+    fun parseProductsPerMilliliters(
         product: SearchResponse
     ): Int {
         val name = product.name

@@ -8,6 +8,9 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
+//import org.slf4j.LoggerFactory
+
+//private val logger = LoggerFactory.getLogger("ScrappingRoutes")
 
 fun Application.scrappingRoutes() {
     val service: ScrappingService by inject()
