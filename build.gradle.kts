@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.ktor.client.okhttp)
     implementation(libs.logback.classic)
     implementation(libs.postgresql)
+    implementation(libs.ktor.server.cors)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.testcontainers.core)

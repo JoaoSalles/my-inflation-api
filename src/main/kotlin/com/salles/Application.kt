@@ -16,9 +16,11 @@ import com.salles.scrapping.services.ScrappingService
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.CORS
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
@@ -33,6 +35,16 @@ fun Application.module() {
         install(CloudflareValidation) {
             this.secret = secret
         }
+    }
+
+    install(CORS) {
+        allowHost("meuibge.com.br", schemes = listOf("https"))
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowHeaders { true }
     }
 
     install(Koin) {
