@@ -1,6 +1,6 @@
 package com.salles.scrapping.routes
 
-import com.salles.scrapping.data.ScrapRequest
+import com.salles.scrapping.data.scrap.ScrapRequest
 import com.salles.scrapping.services.ProductToScrapService
 import com.salles.scrapping.services.ScrappingService
 import io.ktor.server.application.*

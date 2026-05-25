@@ -1,11 +1,12 @@
 package com.salles.scrapping.data
 
+import com.salles.scrapping.domain.PagedResponseInterface
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class PagedResponse<T>(
-    val data: List<T>,
-    val page: Int,
-    val pageSize: Int,
-    val hasNext: Boolean,
-)
+    override val data: List<T>,
+    override val page: Int,
+    override val pageSize: Int,
+    override val hasNext: Boolean,
+) : PagedResponseInterface<T>

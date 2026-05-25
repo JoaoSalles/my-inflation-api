@@ -1,11 +1,14 @@
 package com.salles.scrapping.repositories
 
+import com.salles.scrapping.data.price.PriceAVGResponse
+import com.salles.scrapping.data.price.PriceDTO
 import com.salles.scrapping.db.DatabaseException
 import com.salles.scrapping.db.dbQuery
-import com.salles.scrapping.db.entities.PriceDailyAvgEntity
-import com.salles.scrapping.db.entities.PriceEntity
 import com.salles.scrapping.db.tables.Price
 import com.salles.scrapping.domain.QuantityBase
+import com.salles.scrapping.domain.price.PriceInterface as PriceModel
+import com.salles.scrapping.domain.price.PriceAvgInterface
+import com.salles.scrapping.domain.repositories.PrinceRepositoryInterface
 import kotlin.time.Clock
 import kotlin.time.Instant
 import org.jetbrains.exposed.v1.core.CustomFunction
@@ -20,25 +23,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 
-interface PriceRepository {
-    suspend fun create(productName: String, brand: String, price: Int, quantityBase: QuantityBase, location: Int = 0, productLabel: String? = null): PriceEntity
-    suspend fun list(
-        product: String?,
-        from: Instant? = null,
-        to: Instant? = null,
-        page: Int = 0,
-        pageSize: Int = 20
-    ): Pair<List<PriceEntity>, Boolean>
-    suspend fun listProductPrice(
-        product: String,
-        from: Instant? = null,
-        to: Instant? = null,
-        page: Int = 0,
-        pageSize: Int = 20,
-    ): Pair<List<PriceDailyAvgEntity>, Boolean>
-}
-
-class PostgresPriceRepository : PriceRepository {
+class PostgresPriceRepository : PrinceRepositoryInterface {
 
     override suspend fun create(
         productName: String,
@@ -47,7 +32,7 @@ class PostgresPriceRepository : PriceRepository {
         quantityBase: QuantityBase,
         location: Int,
         productLabel: String?,
-    ): PriceEntity = try {
+    ): PriceModel = try {
         dbQuery {
             val now: Instant = Clock.System.now()
 
@@ -61,15 +46,13 @@ class PostgresPriceRepository : PriceRepository {
                 it[Price.productLabel] = productLabel
                 it[Price.createdAt]    = now
             }
-            PriceEntity(
-                time         = now,
+            PriceDTO(
                 location     = location,
-                product      = productName,
+                name      = productName,
                 price        = price,
                 brand        = brand,
                 quantityBase = quantityBase,
                 productLabel = productLabel,
-                createdAt    = now,
             )
         }
     } catch (e: Exception) {
@@ -82,7 +65,7 @@ class PostgresPriceRepository : PriceRepository {
         to: Instant?,
         page: Int,
         pageSize: Int,
-    ): Pair<List<PriceEntity>, Boolean> = dbQuery {
+    ): Pair<List<PriceDTO>, Boolean> = dbQuery {
         val rows = Price.selectAll()
             .apply {
                 product?.let { andWhere { Price.product like "$it%".lowercase() } }
@@ -93,15 +76,13 @@ class PostgresPriceRepository : PriceRepository {
             .apply { if (pageSize != 0) limit(pageSize + 1) }
             .offset((page * pageSize).toLong())
             .map { row ->
-                PriceEntity(
-                    time         = row[Price.time],
+                PriceDTO(
                     location     = row[Price.location],
-                    product      = row[Price.product],
+                    name      = row[Price.product],
                     price        = row[Price.price],
                     brand        = row[Price.brand],
                     quantityBase = row[Price.quantityBase],
                     productLabel = row[Price.productLabel],
-                    createdAt    = row[Price.createdAt],
                 )
             }
         if (pageSize == 0) Pair(rows, false)
@@ -114,7 +95,7 @@ class PostgresPriceRepository : PriceRepository {
         to: Instant?,
         page: Int,
         pageSize: Int,
-    ): Pair<List<PriceDailyAvgEntity>, Boolean> = dbQuery {
+    ): Pair<List<PriceAvgInterface>, Boolean> = dbQuery {
         val dayBucket = CustomFunction<Instant>("time_bucket", Price.time.columnType, stringLiteral("1 day"), Price.time)
         val avgPrice  = Price.price.avg()
         val rows = Price.select(dayBucket, Price.product, avgPrice)
@@ -128,9 +109,9 @@ class PostgresPriceRepository : PriceRepository {
             .apply { if (pageSize != 0) limit(pageSize + 1) }
             .offset((page * pageSize).toLong())
             .map { row ->
-                PriceDailyAvgEntity(
-                    day      = row[dayBucket],
-                    product  = row[Price.product],
+                PriceAVGResponse(
+                    day = row[dayBucket],
+                    product = row[Price.product],
                     avgPrice = row[avgPrice]?.toInt() ?: 0,
                 )
             }

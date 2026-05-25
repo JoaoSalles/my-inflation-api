@@ -1,7 +1,7 @@
 package com.salles.scrapping.routes
 
-import com.salles.scrapping.data.ListProductPriceRequest
-import com.salles.scrapping.data.ListProductRequest
+import com.salles.scrapping.data.price.ListProductPriceRequest
+import com.salles.scrapping.data.price.ListProductRequest
 import com.salles.scrapping.services.PriceService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application

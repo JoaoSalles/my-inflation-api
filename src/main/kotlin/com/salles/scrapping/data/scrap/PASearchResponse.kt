@@ -1,6 +1,7 @@
-package com.salles.scrapping.data
+package com.salles.scrapping.data.scrap
 
 import com.salles.scrapping.domain.SearchResponse
+import com.salles.scrapping.domain.scrapper.PASearchResponseInterface
 import java.text.Normalizer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -25,9 +26,9 @@ data class PASearchResponse(
     @Serializable(with = PriceSerializer::class)
     override val price: Int? = null,
     override var name: String = "",
-    val brand: String = "",
-    val unitPriceHomogeneousKit: Double? = null
-) : SearchResponse {
+    override val brand: String = "",
+    override val unitPriceHomogeneousKit: Double? = null
+) : PASearchResponseInterface {
     init {
         name = Normalizer.normalize(name, Normalizer.Form.NFD)
             .replace(Regex("\\p{Mn}"), "")

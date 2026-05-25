@@ -1,7 +1,6 @@
 package com.salles.scrapping.services
 
-import com.salles.scrapping.db.entities.ProductToScrapEntity
-import com.salles.scrapping.domain.ProductToScrap
+import com.salles.scrapping.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapping.scrapers.PAScrapper
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +17,7 @@ class ScrappingService(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val PAScrapper = PAScrapper(client, priceService);
 
-    fun launchScrapping(products: List<ProductToScrap> = emptyList()) {
+    fun launchScrapping(products: List<ProductToScrapDTO> = emptyList()) {
         scope.launch {
             products.forEach { product ->
                 delay(500.milliseconds)

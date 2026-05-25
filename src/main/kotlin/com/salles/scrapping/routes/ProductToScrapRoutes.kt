@@ -1,10 +1,11 @@
 package com.salles.scrapping.routes
 
 import com.salles.scrapping.db.ProductNameAlreadyExistsException
-import com.salles.scrapping.data.CreateProductToScrapRequest
+import com.salles.scrapping.data.productToScrap.CreateProductToScrapRequest
 import com.salles.scrapping.services.ProductToScrapService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.request.ContentTransformationException
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -29,6 +30,8 @@ fun Application.productToScrapRoutes() {
                     call.respond(HttpStatusCode.Created, entity)
                 } catch (e: ProductNameAlreadyExistsException) {
                     call.respond(HttpStatusCode.Conflict, ErrorResponse(e.message ?: "Product already exists"))
+                } catch (e: ContentTransformationException) {
+                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("Bad Request"))
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ErrorResponse("Internal server error"))
                 }

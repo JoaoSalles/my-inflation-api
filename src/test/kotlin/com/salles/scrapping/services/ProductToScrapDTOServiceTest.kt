@@ -2,7 +2,7 @@ package com.salles.scrapping.services
 
 import com.salles.database.TestDatabase
 import com.salles.scrapping.repositories.PostgresProductToScrapRepository
-import com.salles.scrapping.data.CreateProductToScrapRequest
+import com.salles.scrapping.data.productToScrap.CreateProductToScrapRequest
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -21,7 +21,7 @@ class ProductToScrapDTOServiceTest {
     @Test
     fun `create persists product and returns entity with id`() = runTest {
         val request = CreateProductToScrapRequest(
-            productName  = "Açúcar",
+            name  = "Açúcar",
             search       = "açúcar cristal",
             quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("açúcar", "cristal"),
@@ -30,9 +30,7 @@ class ProductToScrapDTOServiceTest {
         val entity = service.create(request)
 
         assertEquals("Açúcar", entity.name)
-        assertEquals("açúcar cristal", entity.search)
         assertEquals(QuantityBase.GRAMS, entity.quantityBase)
-        assertEquals(listOf("açúcar", "cristal"), entity.keyWords)
     }
 
     @Test
@@ -72,21 +70,21 @@ class ProductToScrapDTOServiceTest {
     @Test
     fun `listDistinct returns one entry per productName`() = runTest {
         service.create(CreateProductToScrapRequest(
-            productName  = "Açúcar",
+            name  = "Açúcar",
             search       = "açúcar cristal",
             quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("cristal"),
             denyWords    = emptyList(),
         ))
         service.create(CreateProductToScrapRequest(
-            productName  = "Açúcar",
+            name  = "Açúcar",
             search       = "açúcar refinado",
             quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("refinado"),
             denyWords    = emptyList(),
         ))
         service.create(CreateProductToScrapRequest(
-            productName  = "Azeite",
+            name  = "Azeite",
             search       = "azeite oliva",
             quantityBase = QuantityBase.MILLILITERS,
             keyWords     = listOf("azeite"),

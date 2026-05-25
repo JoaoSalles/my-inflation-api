@@ -1,4 +1,4 @@
-package com.salles.scrapping.data
+package com.salles.scrapping.data.scrap
 
 import kotlinx.serialization.Serializable
 

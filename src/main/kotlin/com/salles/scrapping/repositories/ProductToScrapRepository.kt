@@ -1,12 +1,11 @@
 package com.salles.scrapping.repositories
 
+import com.salles.scrapping.data.productToScrap.ProductToScrapCreateResponse
+import com.salles.scrapping.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapping.db.DatabaseException
 import com.salles.scrapping.db.ProductNameAlreadyExistsException
 import com.salles.scrapping.db.dbQuery
-import com.salles.scrapping.db.entities.ProductToScrapEntity
 import com.salles.scrapping.db.tables.ProductsToScrap
-import com.salles.scrapping.domain.ProductToScrap
-import com.salles.scrapping.data.ProductToScrapResponse
 import com.salles.scrapping.domain.QuantityBase
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -17,10 +16,10 @@ import org.jetbrains.exposed.v1.jdbc.update
 import java.sql.SQLException
 
 interface ProductToScrapRepository {
-    suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity
-    suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity?
-    suspend fun list(product: String? = null): Pair<List<ProductToScrapEntity>, Boolean>
-    suspend fun listDistinct(): Pair<List<ProductToScrapEntity>, Boolean>
+    suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapCreateResponse
+    suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapCreateResponse?
+    suspend fun list(product: String? = null): Pair<List<ProductToScrapDTO>, Boolean>
+    suspend fun listDistinct(): Pair<List<ProductToScrapCreateResponse>, Boolean>
 }
 
 class PostgresProductToScrapRepository : ProductToScrapRepository {
@@ -31,7 +30,7 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
         quantityBase: QuantityBase,
         keyWords: List<String>,
         denyWords: List<String>,
-    ): ProductToScrapEntity = try {
+    ): ProductToScrapCreateResponse = try {
         dbQuery {
             val insertedId = ProductsToScrap.insert {
                 it[ProductsToScrap.productName]  = productName
@@ -41,13 +40,9 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
                 it[ProductsToScrap.denyWords]     = Json.encodeToString(denyWords)
             } get ProductsToScrap.id
 
-            ProductToScrapEntity(
-                id           = insertedId,
-                productName  = productName,
-                search       = search,
-                quantityBase = quantityBase,
-                keyWords     = keyWords,
-                denyWords    = denyWords
+            ProductToScrapCreateResponse(
+                name  = productName,
+                quantityBase = quantityBase
             )
         }
     } catch (e: Exception) {
@@ -66,7 +61,7 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
         quantityBase: QuantityBase,
         keyWords: List<String>,
         denyWords: List<String>,
-    ): ProductToScrapEntity? = dbQuery {
+    ): ProductToScrapCreateResponse? = dbQuery {
         val updated = ProductsToScrap.update({ ProductsToScrap.id eq id }) {
             it[ProductsToScrap.productName]  = productName
             it[ProductsToScrap.search]       = search
@@ -75,50 +70,40 @@ class PostgresProductToScrapRepository : ProductToScrapRepository {
             it[ProductsToScrap.denyWords]    = Json.encodeToString(denyWords)
         }
         if (updated == 0) return@dbQuery null
-        ProductToScrapEntity(
-            id           = id,
-            productName  = productName,
-            search       = search,
-            quantityBase = quantityBase,
-            keyWords     = keyWords,
-            denyWords    = denyWords
+        ProductToScrapCreateResponse(
+            name  = productName,
+            quantityBase = quantityBase
         )
     }
 
-    override suspend fun list(product: String?): Pair<List<ProductToScrapEntity>, Boolean> = dbQuery {
+    override suspend fun list(product: String?): Pair<List<ProductToScrapDTO>, Boolean> = dbQuery {
         val query = if (product != null)
             ProductsToScrap.selectAll().where { ProductsToScrap.productName eq product }
         else
             ProductsToScrap.selectAll()
 
         val rows = query.map { row ->
-            ProductToScrapEntity(
-                id           = row[ProductsToScrap.id],
-                productName  = row[ProductsToScrap.productName],
+            ProductToScrapDTO(
+                name  = row[ProductsToScrap.productName],
                 search       = row[ProductsToScrap.search],
                 quantityBase = row[ProductsToScrap.quantityBase],
                 keyWords     = Json.decodeFromString(row[ProductsToScrap.keyWords]),
                 denyWords    = Json.decodeFromString(row[ProductsToScrap.denyWords])
             )
         }
-
         Pair(rows, false)
     }
 
-    override suspend fun listDistinct(): Pair<List<ProductToScrapEntity>, Boolean> = dbQuery {
+    override suspend fun listDistinct(): Pair<List<ProductToScrapCreateResponse>, Boolean> = dbQuery {
         val rows = ProductsToScrap.selectAll()
             .orderBy(ProductsToScrap.productName to SortOrder.ASC)
             .map { row ->
-                ProductToScrapEntity(
-                    id = row[ProductsToScrap.id],
-                    search = "",
-                    quantityBase = row[ProductsToScrap.quantityBase],
-                    productName = row[ProductsToScrap.productName],
-                    keyWords = null,
-                    denyWords = null,
+                ProductToScrapCreateResponse(
+                    name = row[ProductsToScrap.productName],
+                    quantityBase = row[ProductsToScrap.quantityBase]
                 )
             }
-            .distinctBy { it.productName }
+            .distinctBy { it.name }
         Pair(rows, false)
     }
 }

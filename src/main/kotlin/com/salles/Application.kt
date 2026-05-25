@@ -7,7 +7,7 @@ import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.routes.productToScrapRoutes
 import com.salles.scrapping.routes.scrappingRoutes
 import com.salles.scrapping.services.ProductToScrapService
-import com.salles.scrapping.repositories.PriceRepository
+import com.salles.scrapping.domain.repositories.PrinceRepositoryInterface
 import com.salles.scrapping.routes.priceRoutes
 import com.salles.scrapping.services.PriceService
 
@@ -63,7 +63,7 @@ fun Application.module() {
             single { ScrappingService(get(), get()) }
             single<ProductToScrapRepository> { PostgresProductToScrapRepository() }
             single { ProductToScrapService(get()) }
-            single<PriceRepository> { PostgresPriceRepository() }
+            single<PrinceRepositoryInterface> { PostgresPriceRepository() }
             single { PriceService(get()) }
         })
     }

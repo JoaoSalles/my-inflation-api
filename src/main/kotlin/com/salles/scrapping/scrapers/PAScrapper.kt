@@ -1,13 +1,13 @@
 package com.salles.scrapping.scrapers
 
-import com.salles.scrapping.data.PAApiResponse
-import com.salles.scrapping.data.PASearchRequest
-import com.salles.scrapping.data.PASearchResponse
-import com.salles.scrapping.data.PriceDTO
-import com.salles.scrapping.data.ProductToScrapDTO
+import com.salles.scrapping.data.price.CreatePriceCommand
+import com.salles.scrapping.data.scrap.PAApiResponse
+import com.salles.scrapping.data.scrap.PASearchRequest
+import com.salles.scrapping.data.scrap.PASearchResponse
+import com.salles.scrapping.data.price.PriceDTO
+import com.salles.scrapping.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapping.domain.QuantityBase
-import com.salles.scrapping.domain.ProductToScrap
-import com.salles.scrapping.domain.Scrapper
+import com.salles.scrapping.domain.scrapper.Scrapper
 import com.salles.scrapping.domain.SearchResponse
 import com.salles.scrapping.services.PriceService
 import com.salles.scrapping.utils.normalizeForMillicent
@@ -24,9 +24,9 @@ private val log = LoggerFactory.getLogger(PAScrapper::class.java)
 class PAScrapper(
     private val client: HttpClient,
     private val priceService: PriceService? = null,
-) : Scrapper<PASearchResponse> {
+) : Scrapper<PASearchResponse, ProductToScrapDTO> {
 
-    override suspend fun scrap(product: ProductToScrap): List<PASearchResponse> {
+    override suspend fun scrap(product: ProductToScrapDTO): List<PASearchResponse> {
         try {
             val response: HttpResponse = client.post("https://api.vendas.gpa.digital/pa/search/search") {
                 contentType(ContentType.Application.Json)
@@ -51,14 +51,16 @@ class PAScrapper(
 
             parsedProducts.forEach { parsed ->
                 try {
-                    priceService?.create(PriceDTO(
-                        productName  = product.name,
-                        brand        = parsed.brand,
-                        price        = parsed.price ?: 0,
-                        quantityBase = product.quantityBase,
-                        location     = 0,
-                        productLabel = product.name.take(80),
-                    ))
+                    priceService?.create(
+                        CreatePriceCommand(
+                            name = product.name,
+                            brand = parsed.brand,
+                            price = parsed.price ?: 0,
+                            quantityBase = product.quantityBase,
+                            location = 0,
+                            productLabel = product.name.take(80),
+                        )
+                    )
                 } catch (e: Exception) {
                     // TODO create a flow for errors, to keep track of scrapping that failed
                     log.error("Failed to save price for '${product.name}' - brand: ${parsed.brand}", e)
@@ -74,7 +76,7 @@ class PAScrapper(
     }
 
     override suspend fun parseProducts(
-        productToScrap: ProductToScrap,
+        productToScrap: ProductToScrapDTO,
         products: List<SearchResponse>
     ): List<PASearchResponse> {
         val result = mutableListOf<PASearchResponse>()

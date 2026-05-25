@@ -2,7 +2,8 @@ package com.salles.scrapping.routes
 
 import com.salles.scrapping.db.DatabaseException
 import com.salles.database.TestDatabase
-import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.data.productToScrap.ProductToScrapCreateResponse
+import com.salles.scrapping.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapping.repositories.PostgresProductToScrapRepository
 import com.salles.scrapping.repositories.ProductToScrapRepository
 import com.salles.scrapping.domain.QuantityBase
@@ -58,7 +59,7 @@ class ProductToScrapDTORoutesTest {
     fun `POST products returns 201 with entity on success`() = testApp {
         val response = client.post("/product") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody("""{"productName":"Açúcar","search":"açúcar cristal","quantityBase":"GRAMS","keyWords":["açúcar","cristal"]}""")
+            setBody("""{"name":"Açúcar","search":"açúcar cristal","quantityBase":"GRAMS","keyWords":["açúcar","cristal"]}""")
         }
         assertEquals(HttpStatusCode.Created, response.status)
     }
@@ -67,15 +68,15 @@ class ProductToScrapDTORoutesTest {
     fun `GET products returns 200 with deduplicated list`() = testApp {
         client.post("/product") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody("""{"productName":"Açúcar","search":"açúcar cristal","quantityBase":"GRAMS","keyWords":["cristal"],"denyWords":[]}""")
+            setBody("""{"name":"Açúcar","search":"açúcar cristal","quantityBase":"GRAMS","keyWords":["cristal"],"denyWords":[]}""")
         }
         client.post("/product") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody("""{"productName":"Açúcar","search":"açúcar refinado","quantityBase":"GRAMS","keyWords":["refinado"],"denyWords":[]}""")
+            setBody("""{"name":"Açúcar","search":"açúcar refinado","quantityBase":"GRAMS","keyWords":["refinado"],"denyWords":[]}""")
         }
         val postReponse = client.post("/product") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody("""{"productName":"Azeite","search":"azeite oliva","quantityBase":"MILLILITERS","keyWords":["azeite"],"denyWords":[]}""")
+            setBody("""{"name":"Azeite","search":"azeite oliva","quantityBase":"MILLILITERS","keyWords":["azeite"],"denyWords":[]}""")
         }
 
         val response = client.get("/product")
@@ -84,7 +85,7 @@ class ProductToScrapDTORoutesTest {
         assertEquals(HttpStatusCode.OK, response.status)
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject["data"]!!.jsonArray
         assertEquals(2, body.size)
-        val names = body.map { it.jsonObject["productName"]!!.jsonPrimitive.content }.toSet()
+        val names = body.map { it.jsonObject["name"]!!.jsonPrimitive.content }.toSet()
         assertEquals(setOf("Açúcar", "Azeite"), names)
     }
 
@@ -103,17 +104,17 @@ class ProductToScrapDTORoutesTest {
     ) {
         val response = client.post("/product") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            setBody("""{"productName":"Açúcar","search":"açúcar","quantityBase":"GRAMS","keyWords":[]}""")
+            setBody("""{"name":"Açúcar","search":"açúcar","quantityBase":"GRAMS","keyWords":[]}""")
         }
         assertEquals(HttpStatusCode.InternalServerError, response.status)
     }
 }
 
 private class ThrowingProductToScrapRepository(private val ex: Exception) : ProductToScrapRepository {
-    override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapEntity =
+    override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapCreateResponse =
         throw ex
     override suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>) =
         TODO("not needed")
-    override suspend fun list(product: String?): Pair<List<ProductToScrapEntity>, Boolean> = Pair(emptyList(), false)
-    override suspend fun listDistinct(): Pair<List<ProductToScrapEntity>, Boolean> = Pair(emptyList(), false)
+    override suspend fun list(product: String?): Pair<List<ProductToScrapDTO>, Boolean> = Pair(emptyList(), false)
+    override suspend fun listDistinct(): Pair<List<ProductToScrapCreateResponse>, Boolean> = Pair(emptyList(), false)
 }

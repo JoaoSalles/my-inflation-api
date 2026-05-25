@@ -1,11 +1,10 @@
 package com.salles.scrapping.scrappers
 
 import com.salles.database.TestDatabase
-import com.salles.scrapping.data.ListProductRequest
-import com.salles.scrapping.data.PASearchRequest
-import com.salles.scrapping.data.PASearchResponse
-import com.salles.scrapping.data.ProductToScrapDTO
-import com.salles.scrapping.db.entities.ProductToScrapEntity
+import com.salles.scrapping.data.price.ListProductRequest
+import com.salles.scrapping.data.scrap.PASearchRequest
+import com.salles.scrapping.data.scrap.PASearchResponse
+import com.salles.scrapping.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapping.domain.QuantityBase
 import com.salles.scrapping.repositories.PostgresPriceRepository
 import com.salles.scrapping.scrapers.PAScrapper
@@ -52,13 +51,12 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        PAScrapper(client).scrap(ProductToScrapEntity(
-            0,
+        PAScrapper(client).scrap(ProductToScrapDTO(
             "arroz",
             "arroz",
-            QuantityBase.GRAMS,
             emptyList<String>(),
             denyWords = emptyList<String>(),
+            QuantityBase.GRAMS,
         ))
 
         assertEquals("https://api.vendas.gpa.digital/pa/search/search", capturedUrl)
@@ -80,13 +78,12 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        PAScrapper(client).scrap(ProductToScrapEntity(
-            0,
+        PAScrapper(client).scrap(ProductToScrapDTO(
             "arroz",
             "arroz",
-            QuantityBase.GRAMS,
             emptyList<String>(),
-            emptyList<String>()
+            emptyList<String>(),
+            QuantityBase.GRAMS,
         ))
 
         val parsed = Json.decodeFromString<PASearchRequest>(capturedBody)
@@ -111,13 +108,12 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val scrappedValue = PAScrapper(client).scrap(ProductToScrapEntity(
-            0,
+        val scrappedValue = PAScrapper(client).scrap(ProductToScrapDTO(
             "arroz",
             "arroz",
-            QuantityBase.GRAMS,
             emptyList<String>(),
-            emptyList<String>()
+            emptyList<String>(),
+            QuantityBase.GRAMS,
         ))
 
         assert(scrappedValue.isEmpty())
@@ -154,13 +150,12 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val result = PAScrapper(client).scrap(ProductToScrapEntity(
-            0,
+        val result = PAScrapper(client).scrap(ProductToScrapDTO(
             "açúcar",
             "açúcar",
-            QuantityBase.GRAMS,
             emptyList<String>(),
-            emptyList<String>()
+            emptyList<String>(),
+            QuantityBase.GRAMS
         ))
 
         assertEquals(1, result.size)
@@ -180,13 +175,12 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val result = PAScrapper(client).scrap(ProductToScrapEntity(
-            0,
+        val result = PAScrapper(client).scrap(ProductToScrapDTO(
             "arroz",
             "arroz",
-            QuantityBase.GRAMS,
             emptyList<String>(),
-            emptyList<String>()
+            emptyList<String>(),
+            QuantityBase.GRAMS,
         ))
 
         assert(result.isEmpty())
@@ -204,13 +198,12 @@ class PAScrapperTest {
             install(ContentNegotiation) { json() }
         }
 
-        val result = PAScrapper(client).scrap(ProductToScrapEntity(
-            0,
+        val result = PAScrapper(client).scrap(ProductToScrapDTO(
             "arroz",
             "arroz",
-            QuantityBase.GRAMS,
             emptyList<String>(),
-            emptyList<String>()
+            emptyList<String>(),
+            quantityBase = QuantityBase.GRAMS,
         ))
 
         assert(result.isEmpty())
@@ -361,13 +354,12 @@ class PAScrapperTest {
         val priceService = PriceService(PostgresPriceRepository())
         val scrapper = PAScrapper(client, priceService)
 
-        scrapper.scrap(ProductToScrapEntity(
-            id           = 0,
-            productName  = "açúcar",
+        scrapper.scrap(ProductToScrapDTO(
+            name  = "açúcar",
             search       = "açúcar cristal",
-            quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("cristal"),
             denyWords    = emptyList<String>(),
+            quantityBase = QuantityBase.GRAMS,
         ))
 
         val saved = priceService.list(ListProductRequest()).data
@@ -377,7 +369,7 @@ class PAScrapperTest {
         val brands = saved.map { it.brand }.toSet()
         assertTrue("União" in brands)
         assertTrue("Caravelas" in brands)
-        assertTrue(saved.all { it.product == "açúcar" })
+        assertTrue(saved.all { it.name == "açúcar" })
         assertTrue(saved.all { it.quantityBase == QuantityBase.GRAMS })
         assertTrue(saved.all { it.price > 0 })
     }
@@ -404,13 +396,12 @@ class PAScrapperTest {
         val priceService = PriceService(PostgresPriceRepository())
         val scrapper = PAScrapper(client, priceService)
 
-        scrapper.scrap(ProductToScrapEntity(
-            id           = 0,
-            productName  = longName,
+        scrapper.scrap(ProductToScrapDTO(
+            name  = longName,
             search       = "açúcar cristal",
-            quantityBase = QuantityBase.GRAMS,
             keyWords     = emptyList<String>(),
             denyWords    = emptyList<String>(),
+            quantityBase = QuantityBase.GRAMS,
         ))
 
         val saved = priceService.list(ListProductRequest()).data
@@ -458,13 +449,12 @@ class PAScrapperTest {
             )
         }) { install(ContentNegotiation) { json() } }
 
-        val result = PAScrapper(client).scrap(ProductToScrapEntity(
-            id = 0,
-            productName = "café",
+        val result = PAScrapper(client).scrap(ProductToScrapDTO(
+            name = "café",
             search = "café torrado",
-            quantityBase = QuantityBase.GRAMS,
             keyWords = emptyList(),
             denyWords = listOf("+"),
+            quantityBase = QuantityBase.GRAMS,
         ))
         print("result ${result}")
         assertTrue(result.isEmpty(), "scrap() must not return products filtered out by a denyword")
@@ -492,13 +482,12 @@ class PAScrapperTest {
         val priceService = PriceService(PostgresPriceRepository())
         val scrapper = PAScrapper(client, priceService)
 
-        scrapper.scrap(ProductToScrapEntity(
-            id           = 0,
-            productName  = shortName,
+        scrapper.scrap(ProductToScrapDTO(
+            name  = shortName,
             search       = "açúcar cristal",
-            quantityBase = QuantityBase.GRAMS,
             keyWords     = emptyList<String>(),
             denyWords    = emptyList<String>(),
+            quantityBase = QuantityBase.GRAMS,
         ))
 
         val saved = priceService.list(ListProductRequest()).data

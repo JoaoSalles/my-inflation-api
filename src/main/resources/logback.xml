@@ -9,7 +9,7 @@
     <logger name="org.hibernate" level="INFO"/>
     <logger name="io.ktor.client" level="INFO"/>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
