@@ -5,6 +5,6 @@ RUN gradle :core:buildFatJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/core/build/libs/core-1.0.0-SNAPSHOT-all.jar app.jar
+COPY --from=build /app/core/build/libs/core-all.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-Xmx1g", "-jar", "app.jar"]
