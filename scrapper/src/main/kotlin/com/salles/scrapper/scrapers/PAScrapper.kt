@@ -9,7 +9,7 @@ import com.salles.scrapper.data.productToScrap.ProductToScrapDTO
 import com.salles.domain.QuantityBase
 import com.salles.domain.scrapper.Scrapper
 import com.salles.domain.SearchResponse
-import com.salles.scrapper.services.PriceService
+import com.salles.domain.services.PriceServiceInterface
 import com.salles.scrapper.utils.normalizeForMillicent
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -23,7 +23,7 @@ private val log = LoggerFactory.getLogger(PAScrapper::class.java)
 
 class PAScrapper(
     private val client: HttpClient,
-    private val priceService: PriceService? = null,
+    private val priceService: PriceServiceInterface? = null,
 ) : Scrapper<PASearchResponse, ProductToScrapDTO> {
 
     override suspend fun scrap(product: ProductToScrapDTO): List<PASearchResponse> {

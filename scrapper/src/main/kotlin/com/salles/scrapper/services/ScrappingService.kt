@@ -1,5 +1,6 @@
 package com.salles.scrapper.services
 
+import com.salles.domain.services.PriceServiceInterface
 import com.salles.scrapper.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapper.scrapers.PAScrapper
 import io.ktor.client.HttpClient
@@ -13,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class ScrappingService(
     private val client: HttpClient,
-    private val priceService: PriceService,
+    private val priceService: PriceServiceInterface,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val scrapperPA = PAScrapper(client, priceService)

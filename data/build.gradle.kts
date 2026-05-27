@@ -15,33 +15,31 @@ application {
 kotlin {
     jvmToolchain(21)
 }
+
 dependencies {
     implementation(project(":domain"))
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
     implementation(libs.exposed.kotlin.datetime)
     implementation(libs.flyway.core)
-    implementation(libs.flyway.database.postgresql)
     implementation(libs.hikaricp)
+    implementation(libs.ktor.client.okhttp)
     implementation(ktorLibs.serialization.kotlinx.json)
     implementation(ktorLibs.server.config.yaml)
-    implementation(ktorLibs.server.contentNegotiation)
     implementation(ktorLibs.server.core)
-    implementation(ktorLibs.server.netty)
-    implementation(libs.insert.koin.koinKtor)
-    implementation(libs.insert.koin.koinLoggerSlf4j)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.logback.classic)
-    implementation(libs.postgresql)
-    implementation(libs.ktor.server.cors)
 
-    testImplementation(kotlin("test"))
-    testImplementation(libs.testcontainers.core)
-    testImplementation(libs.testcontainers.postgresql)
+    runtimeOnly("io.netty:netty-common:4.2.9.Final")
+    runtimeOnly("io.netty:netty-handler:4.2.9.Final")
+    runtimeOnly("org.eclipse.jetty.alpn:alpn-api:1.1.3.v20160715")
+    runtimeOnly(libs.flyway.database.postgresql)
+    runtimeOnly(libs.logback.classic)
+    runtimeOnly(libs.postgresql)
+
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(ktorLibs.server.testHost)
-    testImplementation(libs.ktor.client.mock)
+
+    testRuntimeOnly("org.jetbrains.kotlin:kotlin-test-junit:2.3.20")
+    testRuntimeOnly(ktorLibs.client.apache5)
+    testRuntimeOnly(ktorLibs.client.cio)
+    testRuntimeOnly(libs.testcontainers.core)
+    testRuntimeOnly(libs.testcontainers.postgresql)
 }
