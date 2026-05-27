@@ -11,5 +11,6 @@ kotlin {
 }
 
 dependencies {
+    api(libs.kotlinx.serialization.core)
     implementation(ktorLibs.serialization.kotlinx.json)
 }

@@ -1,4 +1,4 @@
-package com.salles.core.database
+package com.salles.scrapper.database
 
 import com.salles.data.PostgresDatabaseFactory
 import com.zaxxer.hikari.HikariConfig

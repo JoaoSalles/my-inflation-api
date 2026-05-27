@@ -1,8 +1,8 @@
-package com.salles.core.services
+package com.salles.api.services
 
-import com.salles.core.database.TestDatabase
-import com.salles.scrapper.repositories.PostgresProductToScrapRepository
-import com.salles.scrapper.data.productToScrap.CreateProductToScrapRequest
+import com.salles.api.database.TestDatabase
+import com.salles.api.repositories.PostgresProductToScrapRepository
+import com.salles.api.data.productToScrap.CreateProductToScrapRequest
 import com.salles.domain.QuantityBase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -21,7 +21,7 @@ class ProductToScrapDTOServiceTest {
     @Test
     fun `create persists product and returns entity with id`() = runTest {
         val request = CreateProductToScrapRequest(
-            name  = "Açúcar",
+            name         = "Açúcar",
             search       = "açúcar cristal",
             quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("açúcar", "cristal"),
@@ -70,21 +70,21 @@ class ProductToScrapDTOServiceTest {
     @Test
     fun `listDistinct returns one entry per productName`() = runTest {
         service.create(CreateProductToScrapRequest(
-            name  = "Açúcar",
+            name         = "Açúcar",
             search       = "açúcar cristal",
             quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("cristal"),
             denyWords    = emptyList(),
         ))
         service.create(CreateProductToScrapRequest(
-            name  = "Açúcar",
+            name         = "Açúcar",
             search       = "açúcar refinado",
             quantityBase = QuantityBase.GRAMS,
             keyWords     = listOf("refinado"),
             denyWords    = emptyList(),
         ))
         service.create(CreateProductToScrapRequest(
-            name  = "Azeite",
+            name         = "Azeite",
             search       = "azeite oliva",
             quantityBase = QuantityBase.MILLILITERS,
             keyWords     = listOf("azeite"),

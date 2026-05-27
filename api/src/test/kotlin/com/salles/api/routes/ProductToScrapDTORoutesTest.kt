@@ -1,13 +1,13 @@
-package com.salles.core.routes
+package com.salles.api.routes
 
 import com.salles.data.DatabaseException
-import com.salles.core.database.TestDatabase
-import com.salles.scrapper.data.productToScrap.ProductToScrapCreateResponse
-import com.salles.scrapper.data.productToScrap.ProductToScrapDTO
-import com.salles.scrapper.repositories.PostgresProductToScrapRepository
-import com.salles.scrapper.repositories.ProductToScrapRepository
+import com.salles.api.database.TestDatabase
+import com.salles.api.data.productToScrap.ProductToScrapCreateResponse
+import com.salles.api.data.productToScrap.ProductToScrapDTO
+import com.salles.api.repositories.PostgresProductToScrapRepository
+import com.salles.api.repositories.ProductToScrapRepository
 import com.salles.domain.QuantityBase
-import com.salles.scrapper.services.ProductToScrapService
+import com.salles.api.services.ProductToScrapService
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -113,7 +113,7 @@ class ProductToScrapDTORoutesTest {
 private class ThrowingProductToScrapRepository(private val ex: Exception) : ProductToScrapRepository {
     override suspend fun create(productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapCreateResponse =
         throw ex
-    override suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>) =
+    override suspend fun update(id: Long, productName: String, search: String, quantityBase: QuantityBase, keyWords: List<String>, denyWords: List<String>): ProductToScrapCreateResponse? =
         TODO("not needed")
     override suspend fun list(product: String?): Pair<List<ProductToScrapDTO>, Boolean> = Pair(emptyList(), false)
     override suspend fun listDistinct(): Pair<List<ProductToScrapCreateResponse>, Boolean> = Pair(emptyList(), false)

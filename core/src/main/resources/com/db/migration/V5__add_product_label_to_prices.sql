@@ -1,1 +1,0 @@
-ALTER TABLE prices ADD COLUMN IF NOT EXISTS product_label TEXT;

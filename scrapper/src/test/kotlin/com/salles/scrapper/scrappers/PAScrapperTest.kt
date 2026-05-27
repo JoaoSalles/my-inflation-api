@@ -1,11 +1,11 @@
-package com.salles.core.scrappers
+package com.salles.scrapper.scrappers
 
-import com.salles.core.database.TestDatabase
+import com.salles.scrapper.database.TestDatabase
 import com.salles.scrapper.data.price.ListProductRequest
 import com.salles.scrapper.data.scrap.PASearchRequest
 import com.salles.scrapper.data.scrap.PASearchResponse
 import com.salles.scrapper.data.productToScrap.ProductToScrapDTO
-import com.salles.scrapper.domain.QuantityBase
+import com.salles.domain.QuantityBase
 import com.salles.scrapper.repositories.PostgresPriceRepository
 import com.salles.scrapper.scrapers.PAScrapper
 import com.salles.scrapper.services.PriceService
@@ -355,7 +355,7 @@ class PAScrapperTest {
         val scrapper = PAScrapper(client, priceService)
 
         scrapper.scrap(ProductToScrapDTO(
-            name  = "açúcar",
+            name         = "açúcar",
             search       = "açúcar cristal",
             keyWords     = listOf("cristal"),
             denyWords    = emptyList<String>(),
@@ -397,7 +397,7 @@ class PAScrapperTest {
         val scrapper = PAScrapper(client, priceService)
 
         scrapper.scrap(ProductToScrapDTO(
-            name  = longName,
+            name         = longName,
             search       = "açúcar cristal",
             keyWords     = emptyList<String>(),
             denyWords    = emptyList<String>(),
@@ -450,13 +450,12 @@ class PAScrapperTest {
         }) { install(ContentNegotiation) { json() } }
 
         val result = PAScrapper(client).scrap(ProductToScrapDTO(
-            name = "café",
-            search = "café torrado",
-            keyWords = emptyList(),
-            denyWords = listOf("+"),
+            name         = "café",
+            search       = "café torrado",
+            keyWords     = emptyList(),
+            denyWords    = listOf("+"),
             quantityBase = QuantityBase.GRAMS,
         ))
-        print("result ${result}")
         assertTrue(result.isEmpty(), "scrap() must not return products filtered out by a denyword")
     }
 
@@ -483,7 +482,7 @@ class PAScrapperTest {
         val scrapper = PAScrapper(client, priceService)
 
         scrapper.scrap(ProductToScrapDTO(
-            name  = shortName,
+            name         = shortName,
             search       = "açúcar cristal",
             keyWords     = emptyList<String>(),
             denyWords    = emptyList<String>(),
