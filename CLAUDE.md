@@ -6,54 +6,119 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Run the application
-./gradlew run
+./gradlew :core:run
 
 # Run all tests
 ./gradlew test
 
 # Run a single test class
-./gradlew test --tests "com.salles.scrapping.PAScrapperTest"
+./gradlew :core:test --tests "com.salles.core.SomeTest"
 
 # Build the project
 ./gradlew build
 
-# Build a fat JAR
-./gradlew buildFatJar
+# Build a fat JAR (output: core/build/libs/core-all.jar)
+./gradlew :core:buildFatJar
 ```
 
 ## Project Structure
 
+This is a multi-module Gradle project. The modules are:
+
 ```
-src/main/kotlin/com/salles/
-├── Application.kt                        # Ktor module: wires Koin DI, JSON serialization, scrapping routes
-└── scrapping/
-    ├── data/                             # DTOs / API layer
-    │   ├── PASearchRequest.kt            # Request body for Pão de Açúcar search API
-    │   ├── PASearchResponse.kt           # Response DTO; normalizes names, deserializes centavo prices
-    │   └── ProductToScrap.kt             # Concrete impl of domain ProductToScrap
-    ├── domain/                           # Interfaces and value types
-    │   ├── ProductToScrap.kt             # Interface: name, keywords, quantity base
-    │   ├── QuantityBase.kt               # Enum: GRAMS, UNITS, MILLILITERS
-    │   ├── ScrapperInterface.kt          # Generic Scrapper<T> interface
-    │   └── SearchResponse.kt             # Interface: price (Int?), name (String)
-    ├── routes/
-    │   └── ScrappingRoutes.kt            # GET /scrapping — triggers sugar scraping
-    ├── scrapers/
-    │   └── PAScrapper.kt                 # Pão de Açúcar scraper; filters by keyword/brand, computes per-unit price
-    ├── services/
-    │   └── ScrappingService.kt           # Launches scrapers with a SupervisorJob coroutine scope
-    └── utils/
-        └── MillicentUtils.kt             # normalizeForMillicent / denormalizeFromMillicent
+core/       — executable entry point; wires all modules together via Koin DI
+api/        — HTTP layer: routes, services, repositories, DTOs for price and productToScrap features
+scrapper/   — scraping feature: PAScrapper, ScrappingService, routes, repositories, DTOs
+domain/     — interfaces and value types only (no implementation)
+data/       — database: PostgresDatabaseFactory, Exposed table definitions
+```
+
+### core
+```
+core/src/main/kotlin/com/salles/core/
+├── Application.kt              # Ktor module: installs ContentNegotiation, CORS, CloudflareValidation, Koin DI; registers all routes
+└── plugins/
+    └── CloudflareValidation.kt # Ktor plugin: validates CF-Secret header when CLOUDFLARE_SECRET env var is set
+core/src/main/resources/
+├── application.yaml
+└── logback.xml
+```
+
+### api
+```
+api/src/main/kotlin/com/salles/api/
+├── data/
+│   ├── price/                  # CreatePriceCommand, ListPriceRequest, PriceAVGResponse, PriceDTO
+│   ├── productToScrap/         # ProductToScrapCreateResponse, ProductToScrapDTO, ProductToScrapResponse
+│   └── PagedResponse.kt
+├── repositories/
+│   ├── PriceRepository.kt      # PostgresPriceRepository (Exposed)
+│   └── ProductToScrapRepository.kt
+├── routes/
+│   ├── PriceRoutes.kt
+│   └── ProductToScrapRoutes.kt
+└── services/
+    ├── PriceService.kt
+    └── ProductToScrapService.kt
+```
+
+### scrapper
+```
+scrapper/src/main/kotlin/com/salles/scrapper/
+├── data/scrap/                 # PASearchRequest, PASearchResponse, ScrapRequest
+├── repositories/               # PriceRepository, ProductToScrapRepository (Exposed)
+├── routes/
+│   └── ScrappingRoutes.kt      # GET /scrapping
+├── scrapers/
+│   └── PAScrapper.kt           # Pão de Açúcar scraper; filters by keyword/brand, computes per-unit price
+├── services/
+│   ├── ScrappingService.kt     # Launches scrapers with a SupervisorJob coroutine scope
+│   ├── PriceService.kt
+│   └── ProductToScrapService.kt
+└── utils/
+    └── MillicentUtils.kt       # normalizeForMillicent / denormalizeFromMillicent
+```
+
+### domain
+```
+domain/src/main/kotlin/com/salles/domain/
+├── price/                      # CreatePriceRequest, ListProductPriceRequestInterface, PriceAvgInterface, PriceInterface
+├── productToScrap/
+│   └── ProductToScrap.kt       # Interface: name, keywords, quantity base
+├── repositories/
+│   └── PriceRepositoryInterface.kt
+├── scrapper/
+│   ├── PASearchResponseInterface.kt
+│   └── ScrapperInterface.kt    # Generic Scrapper<T> interface
+├── services/
+│   └── PriceServiceInterface.kt
+├── PagedResponseInterface.kt
+├── QuantityBase.kt             # Enum: GRAMS, UNITS, MILLILITERS
+└── SearchResponse.kt           # Interface: price (Int?), name (String)
+```
+
+### data
+```
+data/src/main/kotlin/com/salles/data/
+├── tables/
+│   ├── Price.kt                # Exposed table definition
+│   └── ProductsToScrap.kt
+├── DatabaseExceptions.kt
+└── PostgresDatabaseFactory.kt  # Connects via DB_URL, DB_USER, DB_PASSWORD env vars; runs Flyway migrations
 ```
 
 ## Architecture
 
-This is a Ktor server application (Kotlin, JVM 21) using Netty as the engine. The single module is registered in `src/main/resources/application.yaml` and wired in `Application.kt`.
+**Entry point**: `core/Application.kt` — registers all routes and wires all dependencies via Koin.
 
-**Module setup** (`Application.kt`):
-- Installs `ContentNegotiation` with `kotlinx.serialization` JSON
-- Registers Koin DI — injects `HttpClient` (OkHttp) and `ScrappingService`
-- Registers scrapping routes
+**Module dependency graph**:
+```
+core → api, scrapper, domain, data
+api  → domain, data
+scrapper → domain, data
+data → (none)
+domain → (none)
+```
 
 **Scraping flow**:
 1. `GET /scrapping` calls `ScrappingService.scrap()`
@@ -62,10 +127,10 @@ This is a Ktor server application (Kotlin, JVM 21) using Netty as the engine. Th
 4. `parseProducts()` filters by keywords, deduplicates by brand, then dispatches to `parseProductsPerGram()` or uses raw price depending on `QuantityBase`
 5. `parseProductsPerGram()` extracts weight from the product name (regex: `500g`, `1 kg`, etc.) and returns price-per-gram
 
-**Price representation**: Sub-cent per-gram prices are stored as scaled integers. Multiply by 10,000 to get millicentavos (`normalizeForMillicent`); divide to recover the real value (`denormalizeFromMillicent`). See `scrapping/docs/database.md` for rationale.
+**Price representation**: Sub-cent per-gram prices are stored as scaled integers. Multiply by 10,000 to get millicentavos (`normalizeForMillicent`); divide to recover the real value (`denormalizeFromMillicent`).
 
-**Database**: PostgreSQL in production; configured via `DB_URL`, `DB_USER`, `DB_PASSWORD` env vars (defaults: `jdbc:postgresql://localhost:5432/my_inflation`, user/pass `salles`). H2 is available as an embedded fallback for tests.
+**Database**: PostgreSQL in production; configured via `DB_URL`, `DB_USER`, `DB_PASSWORD` env vars. Migrations managed by Flyway (migration files in `data/src/main/resources`).
 
-**Dependency injection**: Koin modules are defined in `Application.kt`. New services should be registered there.
+**Dependency injection**: Koin modules are defined in `core/Application.kt`. New services must be registered there.
 
-**Testing**: Tests use `ktor-server-test-host` and `ktor-client-mock`. See `src/test/kotlin/com/salles/scrapping/PAScrapperTest.kt`.
+**Deployment**: Docker builds `core-all.jar` via `gradle :core:buildFatJar`. See `Dockerfile`.
