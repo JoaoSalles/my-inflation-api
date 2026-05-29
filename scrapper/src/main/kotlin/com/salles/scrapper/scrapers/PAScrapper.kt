@@ -10,7 +10,9 @@ import com.salles.domain.QuantityBase
 import com.salles.domain.scrapper.Scrapper
 import com.salles.domain.SearchResponse
 import com.salles.domain.services.PriceServiceInterface
-import com.salles.scrapper.utils.normalizeForMillicent
+import com.salles.scrapper.utils.containsDenyword
+import com.salles.scrapper.utils.matchesKeywords
+import com.salles.scrapper.utils.pricePerQuantity
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -82,116 +84,17 @@ class PAScrapper(
         val result = mutableListOf<PASearchResponse>()
         for (product in products) {
             if (product.name.isEmpty()) continue
-
-            var hasKeyword = true
-            var hasDenyword = false
-            val keyWords = productToScrap.keyWords
-            val denyWords = productToScrap.denyWords
-            if (!keyWords.isNullOrEmpty()) {
-                hasKeyword = keyWords.all { product.name.lowercase().contains(it.lowercase()) }
-            }
-            if (!denyWords.isNullOrEmpty()) {
-                hasDenyword = denyWords.any { product.name.lowercase().contains(it.lowercase()) }
-            }
-
-            if (!hasKeyword || hasDenyword) continue
+            if (!matchesKeywords(product.name, productToScrap.keyWords) ||
+                containsDenyword(product.name, productToScrap.denyWords, productToScrap.quantityBase)) continue
 
             val brand = (product as? PASearchResponse)?.brand ?: continue
 
-            var parsedProduct: PASearchResponse
-            when (productToScrap.quantityBase) {
-                QuantityBase.GRAMS -> {
-                    val pricePerGram = this.parseProductsPerGram(
-                        product,
-                    )
+            val price = pricePerQuantity(productToScrap.quantityBase, product)
+            if (price == 0) continue
 
-                    if (pricePerGram == 0) continue
-
-                    parsedProduct = PASearchResponse(
-                        pricePerGram,
-                        product.name,
-                        brand
-                    )
-                }
-                QuantityBase.UNITS -> {
-                    val pricePerUnit = this.parseProductsPerUnits(product)
-
-                    if (pricePerUnit == 0) continue
-
-                    parsedProduct = PASearchResponse(
-                        pricePerUnit,
-                        productToScrap.name,
-                        brand
-                    )
-                }
-                QuantityBase.MILLILITERS -> {
-                    val pricePerMilliliter = this.parseProductsPerMilliliters(
-                        product
-                    )
-
-                    if (pricePerMilliliter == 0) continue
-
-                    parsedProduct = PASearchResponse(
-                        pricePerMilliliter,
-                        productToScrap.name,
-                        brand
-                    )
-                }
-            }
-
-            result.add(parsedProduct)
+            val name = if (productToScrap.quantityBase == QuantityBase.GRAMS) product.name else productToScrap.name
+            result.add(PASearchResponse(price, name, brand))
         }
         return result
-    }
-
-    /*
-    * There is a problem using grams and milliliter, it may cost less than a cent
-    * so the integer value will be a representation of original value divided by 10000
-    * */
-
-    fun parseProductsPerGram(
-        product: SearchResponse
-    ): Int {
-        val name = product.name
-        val kgRegex = Regex("""(\d+(?:[.,]\d+)?)\s*kg\b""")
-        val gRegex = Regex("""(\d+(?:[.,]\d+)?)\s*g\b""")
-
-        val grams: Double = kgRegex.find(name)?.groupValues?.get(1)
-            ?.replace(',', '.')
-            ?.toDouble()
-            ?.times(1000)
-            ?: gRegex.find(name)?.groupValues?.get(1)
-                ?.replace(',', '.')
-                ?.toDouble()
-            ?: return 0
-
-        return normalizeForMillicent((product.price ?: 0) / grams)
-    }
-
-    fun parseProductsPerUnits(
-        product: SearchResponse
-    ): Int {
-        val unidadeRegex = Regex("""(\d+)\s*[Uu]nidades?""")
-        val units = unidadeRegex.find(product.name)?.groupValues?.get(1)?.toIntOrNull() ?: return 1
-        return ((product.price ?: 0) / units) * 10
-    }
-
-    fun parseProductsPerMilliliters(
-        product: SearchResponse
-    ): Int {
-        val name = product.name
-        val mlRegex = Regex("""(\d+(?:[.,]\d+)?)\s*ml\b""", RegexOption.IGNORE_CASE)
-        val lRegex = Regex("""(\d+(?:[.,]\d+)?)\s*l\b""", RegexOption.IGNORE_CASE)
-
-        val milliliters: Double = lRegex.find(name)?.groupValues?.get(1)
-            ?.replace(',', '.')
-            ?.toDouble()
-            ?.times(1000)
-            ?: mlRegex.find(name)?.groupValues?.get(1)
-                ?.replace(',', '.')
-                ?.toDouble()
-            ?: return 0
-
-        return normalizeForMillicent((product.price ?: 0) / milliliters)
     }
 }
