@@ -1,5 +1,5 @@
 rootProject.name = "my-inflation"
-include(":api", ":core", ":scrapper", ":data", ":domain")
+include(":myInflation", ":root", ":scrapper", ":data", ":domain")
 
 pluginManagement {
     repositories {

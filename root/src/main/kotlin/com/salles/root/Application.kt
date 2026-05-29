@@ -1,4 +1,4 @@
-package com.salles.core
+package com.salles.root
 
 import com.salles.api.repositories.PostgresPriceRepository
 import com.salles.api.repositories.PostgresProductToScrapRepository
@@ -8,7 +8,7 @@ import com.salles.api.routes.priceRoutes
 import com.salles.api.services.PriceService
 import com.salles.domain.services.PriceServiceInterface
 import com.salles.api.services.ProductToScrapService
-import com.salles.core.plugins.CloudflareValidation
+import com.salles.root.plugins.CloudflareValidation
 import com.salles.data.PostgresDatabaseFactory
 import com.salles.domain.repositories.PriceRepositoryInterface
 import com.salles.scrapper.repositories.PostgresProductToScrapRepository as ScrapperProductToScrapRepository

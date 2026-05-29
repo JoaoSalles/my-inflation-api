@@ -8,10 +8,6 @@ plugins {
 group = "com.salles"
 version = "1.0.0"
 
-application {
-    mainClass = "io.ktor.server.netty.EngineMain"
-}
-
 kotlin {
     jvmToolchain(21)
 }

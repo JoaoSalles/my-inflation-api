@@ -7,6 +7,7 @@ hikari = "5.1.0"
 koin = "4.2.0"
 kotlin = "2.3.20"
 ktor = "3.4.1"
+playwright = "1.60.0"
 logback = "1.5.32"
 testcontainers = "2.0.5"
 kotlinx-serialization = "1.9.0"
@@ -36,6 +37,7 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.17" }
 testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
+playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 
 [plugins]
 dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependency-analysis" }

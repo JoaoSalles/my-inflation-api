@@ -8,9 +8,6 @@ plugins {
 group = "com.salles"
 version = "1.0.0"
 
-application {
-    mainClass = "io.ktor.server.netty.EngineMain"
-}
 
 kotlin {
     jvmToolchain(21)
@@ -38,6 +35,7 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.postgresql)
     implementation(libs.ktor.server.cors)
+    implementation(libs.playwright)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.testcontainers.core)
