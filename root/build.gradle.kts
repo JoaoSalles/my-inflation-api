@@ -19,7 +19,7 @@ kotlin {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
-    implementation(project(":api"))
+    implementation(project(":myInflation"))
     implementation(project(":scrapper"))
     implementation(libs.insert.koin.koinKtor)
     implementation(libs.koin.core)

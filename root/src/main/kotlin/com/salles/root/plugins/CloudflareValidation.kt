@@ -1,4 +1,4 @@
-package com.salles.core.plugins
+package com.salles.root.plugins
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.createApplicationPlugin

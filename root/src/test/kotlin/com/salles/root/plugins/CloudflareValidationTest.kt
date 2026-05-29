@@ -1,4 +1,4 @@
-package com.salles.core.plugins
+package com.salles.root.plugins
 
 import io.ktor.client.request.*
 import io.ktor.http.*
