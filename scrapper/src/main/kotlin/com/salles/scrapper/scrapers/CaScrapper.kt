@@ -9,6 +9,7 @@ import com.salles.scrapper.data.price.CreatePriceCommand
 import com.salles.scrapper.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapper.data.scrap.CaSearchResponse
 import com.salles.scrapper.utils.containsDenyword
+import com.salles.scrapper.utils.removePriceOutliers
 import com.salles.scrapper.utils.matchesKeywords
 import com.salles.scrapper.utils.pricePerQuantity
 import java.net.URLEncoder
@@ -20,7 +21,7 @@ private val log = LoggerFactory.getLogger(CaScrapper::class.java)
 
 class CaScrapper(
     private val priceService: PriceServiceInterface? = null,
-    private val postalCode: String = "04546002",
+    private val postalCode: String = "04701000",
 ) {
 
     /**
@@ -69,7 +70,7 @@ class CaScrapper(
             try {
                 priceService?.create(
                     CreatePriceCommand(
-                        name = p.name,
+                        name = product.name,
                         brand = p.brand,
                         price = p.price ?: 0,
                         quantityBase = product.quantityBase,
@@ -111,9 +112,11 @@ class CaScrapper(
             val price = pricePerQuantity(productToScrap.quantityBase, product)
             if (price == 0) continue
 
-            result.add(CaSearchResponse(price = price, name = product.name.take(100), brand = product.name.take(80)))
+            result.add(CaSearchResponse(price = price, name = productToScrap.name, brand = product.name.take(80)))
         }
-        return result
+
+        if (result.isEmpty()) return result
+        return removePriceOutliers(result)
     }
 
     /** "R$ 3,79" / "R$ 1.234,56" → centavos; 0 when no parseable number. */

@@ -4,13 +4,12 @@ import com.salles.scrapper.data.price.CreatePriceCommand
 import com.salles.scrapper.data.scrap.PAApiResponse
 import com.salles.scrapper.data.scrap.PASearchRequest
 import com.salles.scrapper.data.scrap.PASearchResponse
-import com.salles.scrapper.data.price.PriceDTO
 import com.salles.scrapper.data.productToScrap.ProductToScrapDTO
-import com.salles.domain.QuantityBase
 import com.salles.domain.scrapper.Scrapper
 import com.salles.domain.SearchResponse
 import com.salles.domain.services.PriceServiceInterface
 import com.salles.scrapper.utils.containsDenyword
+import com.salles.scrapper.utils.removePriceOutliers
 import com.salles.scrapper.utils.matchesKeywords
 import com.salles.scrapper.utils.pricePerQuantity
 import io.ktor.client.*
@@ -32,7 +31,7 @@ class PAScrapper(
         try {
             val response: HttpResponse = client.post("https://api.vendas.gpa.digital/pa/search/search") {
                 contentType(ContentType.Application.Json)
-                setBody(PASearchRequest(product.search ?: ""))
+                setBody(PASearchRequest(product.search))
             }
             if (!response.status.isSuccess()) {
                 log.error("PA search failed for term='$product': HTTP ${response.status}")
@@ -43,9 +42,9 @@ class PAScrapper(
             val parsedProducts = this.parseProducts(
                 ProductToScrapDTO(
                     product.name,
-                    product.search ?: "",
-                    product.keyWords ?: emptyList(),
-                    product.denyWords ?: emptyList(),
+                    product.search,
+                    product.keyWords,
+                    product.denyWords,
                     product.quantityBase
                 ),
                 products
@@ -87,14 +86,16 @@ class PAScrapper(
             if (!matchesKeywords(product.name, productToScrap.keyWords) ||
                 containsDenyword(product.name, productToScrap.denyWords, productToScrap.quantityBase)) continue
 
-            val brand = (product as? PASearchResponse)?.brand ?: continue
+            val brand = (product as? PASearchResponse)?.brand ?: ""
 
             val price = pricePerQuantity(productToScrap.quantityBase, product)
             if (price == 0) continue
 
-            val name = if (productToScrap.quantityBase == QuantityBase.GRAMS) product.name else productToScrap.name
-            result.add(PASearchResponse(price, name, brand))
+            result.add(PASearchResponse(price, product.name, brand))
         }
-        return result
+
+        if (result.isEmpty()) return result
+        return removePriceOutliers(result)
     }
+
 }
