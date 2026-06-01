@@ -305,6 +305,85 @@ class PAScrapperTest {
     }
 
     @Test
+    fun `parseProducts removes price outliers via the IQR rule`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        // All 1kg, so per-gram price == input price * 10 (normalizeForMillicent(price/1000)).
+        val products = listOf(
+            PASearchResponse(price = 10, name = "Açúcar União 1kg", brand = "União"),
+            PASearchResponse(price = 11, name = "Açúcar Camil 1kg", brand = "Camil"),
+            PASearchResponse(price = 12, name = "Açúcar Guarani 1kg", brand = "Guarani"),
+            PASearchResponse(price = 13, name = "Açúcar Caravelas 1kg", brand = "Caravelas"),
+            PASearchResponse(price = 100, name = "Açúcar Premium 1kg", brand = "Premium"),
+        )
+        val productToScrap = ProductToScrapDTO("açúcar", "açúcar", listOf("acucar"), emptyList(), QuantityBase.GRAMS)
+
+        val result = scrapper.parseProducts(productToScrap, products)
+
+        // per-gram prices: 100, 110, 120, 130, 1000 -> Q1=110, Q3=130, IQR=20, upper fence=160.
+        // the 1000 entry exceeds the upper fence and is dropped.
+        assertEquals(4, result.size)
+        assertTrue(result.none { it.brand == "Premium" }, "outlier above the IQR fence must be removed")
+    }
+
+    @Test
+    fun `parseProducts keeps every product when none falls outside the IQR fences`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        // per-gram prices 100, 110, 120, 130 are tightly clustered: nothing breaches a fence.
+        val products = listOf(
+            PASearchResponse(price = 10, name = "Açúcar União 1kg", brand = "União"),
+            PASearchResponse(price = 11, name = "Açúcar Camil 1kg", brand = "Camil"),
+            PASearchResponse(price = 12, name = "Açúcar Guarani 1kg", brand = "Guarani"),
+            PASearchResponse(price = 13, name = "Açúcar Caravelas 1kg", brand = "Caravelas"),
+        )
+        val productToScrap = ProductToScrapDTO("açúcar", "açúcar", listOf("acucar"), emptyList(), QuantityBase.GRAMS)
+
+        val result = scrapper.parseProducts(productToScrap, products)
+
+        assertEquals(4, result.size, "no product breaches an IQR fence, so none is removed")
+    }
+
+    @Test
+    fun `parseProducts removes a lone outlier from a three-product sample via the MAD rule`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        // per-gram prices: 100, 110, 1000 -> median 110, MAD 10, fence 110 ± 3*1.4826*10 ≈ [65.5, 154.5].
+        // IQR would skip this sample (size < 4), but MAD still flags the 1000.
+        val products = listOf(
+            PASearchResponse(price = 10, name = "Açúcar União 1kg", brand = "União"),
+            PASearchResponse(price = 11, name = "Açúcar Camil 1kg", brand = "Camil"),
+            PASearchResponse(price = 100, name = "Açúcar Premium 1kg", brand = "Premium"),
+        )
+        val productToScrap = ProductToScrapDTO("açúcar", "açúcar", listOf("acucar"), emptyList(), QuantityBase.GRAMS)
+
+        val result = scrapper.parseProducts(productToScrap, products)
+
+        assertEquals(2, result.size)
+        assertTrue(result.none { it.brand == "Premium" }, "outlier beyond the MAD fence must be removed")
+    }
+
+    @Test
+    fun `parseProducts skips outlier filtering for samples smaller than three`() = runTest {
+        val scrapper = PAScrapper(HttpClient(MockEngine { respond(ByteReadChannel(""), HttpStatusCode.OK) }) {
+            install(ContentNegotiation) { json() }
+        })
+        // Two products: nothing reliable to compare against, so even a wide gap is kept.
+        val products = listOf(
+            PASearchResponse(price = 10, name = "Açúcar União 1kg", brand = "União"),
+            PASearchResponse(price = 100, name = "Açúcar Premium 1kg", brand = "Premium"),
+        )
+        val productToScrap = ProductToScrapDTO("açúcar", "açúcar", listOf("acucar"), emptyList(), QuantityBase.GRAMS)
+
+        val result = scrapper.parseProducts(productToScrap, products)
+
+        assertEquals(2, result.size, "below the minimum sample, no filtering is applied")
+    }
+
+    @Test
     fun `scrap filters out products whose name contains a denyword`() = runTest {
         val json = """
             {

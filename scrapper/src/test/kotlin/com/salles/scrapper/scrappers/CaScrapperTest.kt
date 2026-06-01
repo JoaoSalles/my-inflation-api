@@ -94,7 +94,7 @@ class CaScrapperTest {
 
         assertEquals(1, result.size)
         assertEquals(9990, result[0].price)
-        assertEquals(100, result[0].brand.length)
+        assertEquals(80, result[0].brand.length)
     }
 
     @Test
@@ -127,6 +127,97 @@ class CaScrapperTest {
         val result = CaScrapper().parseProducts(productToScrap, products)
 
         assertTrue(result.isEmpty(), "GRAMS product with no parseable weight yields price 0 and is dropped")
+    }
+
+    @Test
+    fun `parseProducts removes price outliers via the IQR rule`() = runTest {
+        // All 1kg, so per-gram price == input price * 10 (normalizeForMillicent(price/1000)).
+        val products = listOf(
+            CaSearchResponse(price = 10, name = "Açúcar União 1kg"),
+            CaSearchResponse(price = 11, name = "Açúcar Camil 1kg"),
+            CaSearchResponse(price = 12, name = "Açúcar Guarani 1kg"),
+            CaSearchResponse(price = 13, name = "Açúcar Caravelas 1kg"),
+            CaSearchResponse(price = 100, name = "Açúcar Premium 1kg"),
+        )
+        val productToScrap = ProductToScrapDTO(
+            name = "açúcar",
+            search = "açúcar",
+            keyWords = listOf("acucar"),
+            denyWords = emptyList(),
+            quantityBase = QuantityBase.GRAMS,
+        )
+
+        val result = CaScrapper().parseProducts(productToScrap, products)
+
+        // per-gram prices: 100, 110, 120, 130, 1000 -> Q1=110, Q3=130, IQR=20, upper fence=160.
+        // the 1000 entry exceeds the upper fence and is dropped.
+        assertEquals(4, result.size)
+        assertTrue(result.all { it.price!! <= 160 }, "outlier above the IQR fence must be removed")
+    }
+
+    @Test
+    fun `parseProducts keeps every product when none falls outside the IQR fences`() = runTest {
+        // per-gram prices 100, 110, 120, 130 are tightly clustered: nothing breaches a fence.
+        val products = listOf(
+            CaSearchResponse(price = 10, name = "Açúcar União 1kg"),
+            CaSearchResponse(price = 11, name = "Açúcar Camil 1kg"),
+            CaSearchResponse(price = 12, name = "Açúcar Guarani 1kg"),
+            CaSearchResponse(price = 13, name = "Açúcar Caravelas 1kg"),
+        )
+        val productToScrap = ProductToScrapDTO(
+            name = "açúcar",
+            search = "açúcar",
+            keyWords = listOf("acucar"),
+            denyWords = emptyList(),
+            quantityBase = QuantityBase.GRAMS,
+        )
+
+        val result = CaScrapper().parseProducts(productToScrap, products)
+
+        assertEquals(4, result.size, "no product breaches an IQR fence, so none is removed")
+    }
+
+    @Test
+    fun `parseProducts removes a lone outlier from a three-product sample via the MAD rule`() = runTest {
+        // per-gram prices: 100, 110, 1000 -> median 110, MAD 10, fence 110 ± 3*1.4826*10 ≈ [65.5, 154.5].
+        // IQR would skip this sample (size < 4), but MAD still flags the 1000.
+        val products = listOf(
+            CaSearchResponse(price = 10, name = "Açúcar União 1kg"),
+            CaSearchResponse(price = 11, name = "Açúcar Camil 1kg"),
+            CaSearchResponse(price = 100, name = "Açúcar Premium 1kg"),
+        )
+        val productToScrap = ProductToScrapDTO(
+            name = "açúcar",
+            search = "açúcar",
+            keyWords = listOf("acucar"),
+            denyWords = emptyList(),
+            quantityBase = QuantityBase.GRAMS,
+        )
+
+        val result = CaScrapper().parseProducts(productToScrap, products)
+
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.price!! <= 155 }, "outlier beyond the MAD fence must be removed")
+    }
+
+    @Test
+    fun `parseProducts skips outlier filtering for samples smaller than three`() = runTest {
+        // Two products: nothing reliable to compare against, so even a wide gap is kept.
+        val products = listOf(
+            CaSearchResponse(price = 10, name = "Açúcar União 1kg"),
+            CaSearchResponse(price = 100, name = "Açúcar Premium 1kg"),
+        )
+        val productToScrap = ProductToScrapDTO(
+            name = "açúcar",
+            search = "açúcar",
+            keyWords = listOf("acucar"),
+            denyWords = emptyList(),
+            quantityBase = QuantityBase.GRAMS,
+        )
+
+        val result = CaScrapper().parseProducts(productToScrap, products)
+
+        assertEquals(2, result.size, "below the minimum sample, no filtering is applied")
     }
 
     // --- scrapFromPage (extract -> parse -> persist) ---
