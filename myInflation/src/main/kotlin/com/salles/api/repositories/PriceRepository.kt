@@ -82,6 +82,7 @@ class PostgresPriceRepository : PriceRepositoryInterface {
                     brand        = row[Price.brand],
                     quantityBase = row[Price.quantityBase],
                     productLabel = row[Price.productLabel],
+                    time = row[Price.time]
                 )
             }
         if (pageSize == 0) Pair(rows, false)

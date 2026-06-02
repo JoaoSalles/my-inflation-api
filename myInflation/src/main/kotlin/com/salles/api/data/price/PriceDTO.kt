@@ -3,6 +3,7 @@ package com.salles.api.data.price
 import com.salles.domain.QuantityBase
 import com.salles.domain.price.PriceInterface
 import kotlinx.serialization.Serializable
+import kotlin.time.Instant
 
 @Serializable
 data class PriceDTO(
@@ -12,6 +13,7 @@ data class PriceDTO(
     override val quantityBase: QuantityBase,
     override val location: Int,
     override val productLabel: String? = null,
+    val time: Instant? = null
 ) : PriceInterface {
 
 

@@ -9,7 +9,6 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -21,6 +20,7 @@ class ScrappingService(
     private val client: HttpClient,
     private val priceService: PriceServiceInterface,
 ) {
+    private val log = LoggerFactory.getLogger(ScrappingService::class.java)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val scrapperPA = PAScrapper(client, priceService)
     private val scrapperCa = CaScrapper(priceService)
@@ -31,11 +31,23 @@ class ScrappingService(
     }
 
     /** Runs the scrape to completion; suspends until every product has been scraped. */
-    suspend fun runScrapping(products: List<ProductToScrapDTO> = emptyList()) = coroutineScope {
+    suspend fun runScrapping(products: List<ProductToScrapDTO> = emptyList()) = supervisorScope {
         products.forEach { product ->
             delay(500.milliseconds)
-            launch { scrapperPA.scrap(product) }
-            launch { scrapperCa.scrap(product) }
+            launch {
+                try {
+                    scrapperPA.scrap(product)
+                } catch (e: Throwable) {
+                    log.error("PA scrape failed for product '{}'", product.name, e)
+                }
+            }
+            launch {
+                try {
+                    scrapperCa.scrap(product)
+                } catch (e: Throwable) {
+                    log.error("Ca scrape failed for product '{}'", product.name, e)
+                }
+            }
         }
     }
 }
