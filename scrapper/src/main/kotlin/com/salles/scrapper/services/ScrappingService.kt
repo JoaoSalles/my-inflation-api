@@ -5,11 +5,15 @@ import com.salles.scrapper.data.productToScrap.ProductToScrapDTO
 import com.salles.scrapper.scrapers.CaScrapper
 import com.salles.scrapper.scrapers.PAScrapper
 import io.ktor.client.HttpClient
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import org.slf4j.LoggerFactory
 import kotlin.collections.forEach
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -21,13 +25,17 @@ class ScrappingService(
     private val scrapperPA = PAScrapper(client, priceService)
     private val scrapperCa = CaScrapper(priceService)
 
+    /** Fire-and-forget: returns immediately while scraping continues on a background scope. */
     fun launchScrapping(products: List<ProductToScrapDTO> = emptyList()) {
-        scope.launch {
-            products.forEach { product ->
-                delay(500.milliseconds)
-                launch { scrapperPA.scrap(product) }
-                launch { scrapperCa.scrap(product) }
-            }
+        scope.launch { runScrapping(products) }
+    }
+
+    /** Runs the scrape to completion; suspends until every product has been scraped. */
+    suspend fun runScrapping(products: List<ProductToScrapDTO> = emptyList()) = coroutineScope {
+        products.forEach { product ->
+            delay(500.milliseconds)
+            launch { scrapperPA.scrap(product) }
+            launch { scrapperCa.scrap(product) }
         }
     }
 }

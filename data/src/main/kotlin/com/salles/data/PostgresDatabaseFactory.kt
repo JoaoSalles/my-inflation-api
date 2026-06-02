@@ -22,6 +22,23 @@ class PostgresDatabaseFactory(private val dataSource: DataSource) {
     )
 
     companion object {
+        /**
+         * Builds a factory straight from environment variables (no Ktor config), for the
+         * standalone scraper batch job. Defaults mirror `application.yaml`.
+         */
+        fun fromEnv(): PostgresDatabaseFactory {
+            val hikariConfig = HikariConfig().apply {
+                jdbcUrl         = System.getenv("DB_URL") ?: "jdbc:postgresql://localhost:5432/my_inflation"
+                username        = System.getenv("DB_USER") ?: "salles"
+                password        = System.getenv("DB_PASSWORD") ?: "salles"
+                maximumPoolSize = (System.getenv("DB_POOL_MAX") ?: "4").toInt()
+                driverClassName = "org.postgresql.Driver"
+                isAutoCommit    = false
+                validate()
+            }
+            return PostgresDatabaseFactory(HikariDataSource(hikariConfig))
+        }
+
         private fun buildHikariDataSource(config: ApplicationConfig): HikariDataSource {
             val hikariConfig = HikariConfig().apply {
                 jdbcUrl         = config.property("db.url").getString()
