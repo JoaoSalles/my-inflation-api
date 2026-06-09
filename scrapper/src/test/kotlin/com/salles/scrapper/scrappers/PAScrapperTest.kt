@@ -258,7 +258,7 @@ class PAScrapperTest {
         val json = """
             {
               "products": [
-                { "price": 5.99, "name": "Açúcar Cristal 1kg", "brand": "União", "unitPriceHomogeneousKit": null }
+                { "price": 5.99, "name": "Açúcar Cristal 1kg AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "brand": "União", "unitPriceHomogeneousKit": null }
               ]
             }
         """.trimIndent()
@@ -284,7 +284,7 @@ class PAScrapperTest {
 
         val saved = priceService.list(ListProductRequest()).data
         assertEquals(1, saved.size)
-        assertEquals("A".repeat(80), saved[0].productLabel)
+        assertEquals("acucar cristal 1kg aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", saved[0].productLabel)
     }
 
     @Test
@@ -418,7 +418,7 @@ class PAScrapperTest {
 
     @Test
     fun `scrap stores product_label unchanged when productName is shorter than 80 chars`() = runTest {
-        val shortName = "açúcar"
+        val shortName = "acucar cristal 1kg"
         val json = """
             {
               "products": [
