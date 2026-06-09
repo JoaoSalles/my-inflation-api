@@ -59,7 +59,7 @@ class PAScrapper(
                             price = parsed.price ?: 0,
                             quantityBase = product.quantityBase,
                             location = 0,
-                            productLabel = product.name.take(80),
+                            productLabel = parsed.name.take(80),
                         )
                     )
                 } catch (e: Exception) {
